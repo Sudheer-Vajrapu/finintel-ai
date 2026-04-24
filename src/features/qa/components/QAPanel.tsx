@@ -1,0 +1,217 @@
+import { useRef, useState, useEffect } from 'react'
+import { ArrowRightIcon, SparklesIcon, AlertTriangleIcon } from '@/shared/components/ui/Icons'
+import { useAsk, getLocalAnswer } from '../hooks/useAsk'
+import type { AnalysisResult } from '@/shared/utils'
+
+const QUICK_QUESTIONS = [
+  'Which project is at risk?',
+  'Who is overloaded?',
+  'What is the highest margin project?',
+  'Give me a summary',
+]
+
+function useTypingEffect(text: string, speed = 10) {
+  const [displayed, setDisplayed] = useState('')
+  const [done, setDone] = useState(false)
+  useEffect(() => {
+    if (!text) { setDisplayed(''); setDone(false); return }
+    setDisplayed(''); setDone(false)
+    let i = 0
+    const id = setInterval(() => {
+      setDisplayed(text.slice(0, ++i))
+      if (i >= text.length) { clearInterval(id); setDone(true) }
+    }, speed)
+    return () => clearInterval(id)
+  }, [text, speed])
+  return { displayed, done }
+}
+
+function ThinkingDots() {
+  return (
+    <div className="flex items-center gap-1.5 py-0.5">
+      {[0, 160, 320].map(d => (
+        <span
+          key={d}
+          className="w-2 h-2 rounded-full bg-accent/50 animate-bounce"
+          style={{ animationDelay: `${d}ms`, animationDuration: '0.9s' }}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ── Error state (req #7) ────────────────────────────────────────────────────
+// Light red background · dark red text · warning icon · error-pop animation
+function AIErrorState({ message }: { message: string }) {
+  return (
+    <div
+      className="rounded-[14px] p-4 mb-4 animate-error-pop"
+      style={{
+        background: 'var(--danger-bg)',
+        border: '2px solid var(--danger-border)',
+      }}
+    >
+      <div className="flex items-start gap-3">
+        {/* Warning icon badge */}
+        <div
+          className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0 mt-0.5"
+          style={{ background: 'var(--danger-bold)', color: '#fff' }}
+        >
+          <AlertTriangleIcon size={15} strokeWidth={2.5} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-bold text-[var(--danger-bold)] leading-tight mb-0.5">
+            AI unavailable
+          </p>
+          <p className="text-[12px] font-medium leading-relaxed" style={{ color: 'var(--danger-text)' }}>
+            {message}
+          </p>
+          <p className="text-[11px] mt-1.5 font-medium" style={{ color: 'var(--danger-text)', opacity: 0.75 }}>
+            Check your connection or try again in a moment.
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function QAPanel({ localData }: { localData?: AnalysisResult | null }) {
+  const [query, setQuery]   = useState('')
+  const [answer, setAnswer] = useState('')
+  const inputRef            = useRef<HTMLInputElement>(null)
+  const { mutate: ask, isPending, isError, error } = useAsk()
+  const { displayed, done } = useTypingEffect(isPending ? '' : answer)
+
+  const handleAsk = (q?: string) => {
+    const question = (q ?? query).trim()
+    if (!question) return
+    setQuery(question)
+    setAnswer('')
+    ask(
+      { query: question },
+      {
+        onSuccess: data => setAnswer(data.answer),
+        onError:   ()   => { if (localData) setAnswer(getLocalAnswer(question, localData)) },
+      },
+    )
+  }
+
+  const showApiError = isError && !answer && !localData
+  const errMsg = error instanceof Error ? error.message : 'Could not reach the AI service.'
+
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center gap-2.5 mb-4 pb-4 border-b border-[var(--border-subtle)]">
+        <div
+          className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0"
+          style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' }}
+        >
+          <SparklesIcon size={15} strokeWidth={2} className="text-white" />
+        </div>
+        <div>
+          <p className="text-[14px] font-bold text-ink-primary tracking-tight">Ask AI</p>
+          <p className="text-[11px] text-ink-tertiary">Ask anything about your financial data</p>
+        </div>
+      </div>
+
+      {/* Input row - stacked on mobile, inline on desktop */}
+      <div className="flex flex-col sm:flex-row gap-2 mb-4">
+        <input
+          ref={inputRef}
+          type="text"
+          value={query}
+          onChange={e => setQuery(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleAsk()}
+          placeholder="e.g. Which project has the highest margin?"
+          className={[
+            'flex-1 px-3 py-2 sm:px-4 sm:py-2.5 text-[13px] sm:text-[14px] font-sans bg-surface-base',
+            'border-2 border-[var(--border-default)] rounded-[10px] text-ink-primary',
+            'placeholder:text-ink-tertiary outline-none',
+            'transition-all focus:border-accent focus:ring-2 focus:ring-[var(--accent-light)]',
+          ].join(' ')}
+        />
+        <button
+          onClick={() => handleAsk()}
+          disabled={isPending || !query.trim()}
+          className="ask-btn px-4 py-2 sm:px-5 sm:py-2.5 text-[13px] font-semibold flex items-center justify-center gap-2"
+        >
+          {isPending ? (
+            <span className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              Ask
+              <ArrowRightIcon size={14} strokeWidth={2.5} />
+            </>
+          )}
+        </button>
+      </div>
+
+      {/* Error state — req #7 */}
+      {showApiError && <AIErrorState message={errMsg} />}
+
+      {/* Answer area — only shown when NOT an error */}
+      {!showApiError && (isPending || answer) && (
+        <div
+          className="rounded-[14px] p-4 mb-4 min-h-[80px] animate-fade-in"
+          style={{
+            background: 'var(--accent-light)',
+            border: '2px solid var(--accent-border)',
+          }}
+        >
+          {isPending ? (
+            <div className="flex items-center gap-3">
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
+                style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' }}
+              >
+                <SparklesIcon size={12} strokeWidth={2} className="text-white" />
+              </div>
+              <ThinkingDots />
+            </div>
+          ) : (
+            <div className="flex items-start gap-3">
+              <div
+                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
+                style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' }}
+              >
+                <SparklesIcon size={12} strokeWidth={2} className="text-white" />
+              </div>
+              <p className="text-[14px] text-ink-primary leading-[1.75] flex-1">
+                {displayed}
+                {!done && (
+                  <span className="inline-block w-0.5 h-[15px] bg-accent ml-0.5 align-middle animate-pulse" />
+                )}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Quick questions - 2-column grid on mobile, flex-wrap on desktop */}
+      <div>
+        <p className="text-[10px] sm:text-[11px] font-semibold text-ink-tertiary uppercase tracking-[0.5px] mb-2">
+          Quick questions
+        </p>
+        <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-1.5 sm:gap-2">
+          {QUICK_QUESTIONS.map(q => (
+            <button
+              key={q}
+              onClick={() => { setQuery(q); handleAsk(q) }}
+              disabled={isPending}
+              className={[
+                'px-2.5 py-1.5 sm:px-3.5 rounded-full text-[11px] sm:text-[12px] font-semibold text-left',
+                'bg-surface-base border-2 border-[var(--border-default)] text-ink-secondary',
+                'hover:border-accent hover:text-ink-primary hover:bg-accent',
+                'dark:hover:text-accent-text',
+                'transition-all duration-150 disabled:opacity-40',
+              ].join(' ')}
+            >
+              {q}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}

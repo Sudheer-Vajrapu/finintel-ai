@@ -1,0 +1,95 @@
+/** @type {import('tailwindcss').Config} */
+export default {
+  content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: {
+        sans:    ['Inter', 'sans-serif'],
+        heading: ['"Plus Jakarta Sans"', 'sans-serif'],
+        serif:   ['"Fraunces"', 'serif'],
+        mono:    ['"JetBrains Mono"', 'monospace'],
+      },
+      colors: {
+        surface: {
+          page:   'var(--surface-page)',
+          base:   'var(--surface-base)',
+          raised: 'var(--surface-raised)',
+          sunken: 'var(--surface-sunken)',
+        },
+        ink: {
+          primary:   'var(--ink-primary)',
+          secondary: 'var(--ink-secondary)',
+          tertiary:  'var(--ink-tertiary)',
+        },
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hover:   'var(--accent-hover)',
+          text:    'var(--accent-text)',
+          light:   'var(--accent-light)',
+          border:  'var(--accent-border)',
+          dark:    'var(--accent-dark)',
+        },
+        success: {
+          bg:     'var(--success-bg)',
+          border: 'var(--success-border)',
+          text:   'var(--success-text)',
+          mid:    'var(--success-mid)',
+          bold:   'var(--success-bold)',
+        },
+        danger: {
+          bg:     'var(--danger-bg)',
+          border: 'var(--danger-border)',
+          text:   'var(--danger-text)',
+          mid:    'var(--danger-mid)',
+          bold:   'var(--danger-bold)',
+        },
+        warning: {
+          bg:     'var(--warning-bg)',
+          border: 'var(--warning-border)',
+          text:   'var(--warning-text)',
+          mid:    'var(--warning-mid)',
+          bold:   'var(--warning-bold)',
+        },
+        info: {
+          bg:     'var(--info-bg)',
+          border: 'var(--info-border)',
+          text:   'var(--info-text)',
+          mid:    'var(--info-mid)',
+        },
+      },
+      borderRadius: {
+        sm: '8px', DEFAULT: '12px', lg: '16px', xl: '20px', '2xl': '24px',
+      },
+      boxShadow: {
+        sm:    '0 1px 2px rgba(15,22,41,.04), 0 1px 4px rgba(15,22,41,.06)',
+        md:    '0 4px 6px rgba(15,22,41,.04), 0 8px 24px rgba(15,22,41,.08)',
+        lg:    '0 8px 16px rgba(15,22,41,.06), 0 24px 48px rgba(15,22,41,.10)',
+        toast: '0 4px 12px rgba(15,22,41,.10), 0 16px 40px rgba(15,22,41,.12)',
+      },
+      animation: {
+        'fade-up':   'fadeUp .24s cubic-bezier(.16,1,.3,1) forwards',
+        'fade-in':   'fadeIn .18s ease forwards',
+        'slide-up':  'slideUp .32s cubic-bezier(.16,1,.3,1) forwards',
+        'pill-in':   'pillIn .2s cubic-bezier(.34,1.56,.64,1) forwards',
+        'skeleton':  'skeleton 1.5s ease infinite',
+        'toast-in':  'toastIn .24s cubic-bezier(.16,1,.3,1) forwards',
+        'toast-out': 'toastOut .18s ease forwards',
+        'dup-blink': 'dupBlink .55s ease 2',
+        'error-pop': 'errorPop .28s cubic-bezier(.16,1,.3,1) forwards',
+      },
+      keyframes: {
+        fadeUp:    { from: { opacity:'0', transform:'translateY(8px)'  }, to: { opacity:'1', transform:'translateY(0)'  } },
+        fadeIn:    { from: { opacity:'0' }, to: { opacity:'1' } },
+        slideUp:   { from: { opacity:'0', transform:'translateY(16px)' }, to: { opacity:'1', transform:'translateY(0)'  } },
+        pillIn:    { from: { opacity:'0', transform:'scale(.9)'  }, to: { opacity:'1', transform:'scale(1)'  } },
+        skeleton:  { '0%': { backgroundPosition:'100% 0' }, '100%': { backgroundPosition:'-100% 0' } },
+        toastIn:   { from: { opacity:'0', transform:'translateX(12px) scale(.97)' }, to: { opacity:'1', transform:'translateX(0) scale(1)'   } },
+        toastOut:  { from: { opacity:'1', transform:'translateX(0) scale(1)' },     to: { opacity:'0', transform:'translateX(8px) scale(.96)' } },
+        dupBlink:  { '0%,100%': { borderColor:'rgba(30,40,80,0.14)', backgroundColor:'#fff' }, '30%,70%': { borderColor:'#D97706', backgroundColor:'#FEF3C7' } },
+        errorPop:  { '0%': { transform:'scale(.96)', opacity:'0' }, '60%': { transform:'scale(1.01)' }, '100%': { transform:'scale(1)', opacity:'1' } },
+      },
+    },
+  },
+  plugins: [],
+}
