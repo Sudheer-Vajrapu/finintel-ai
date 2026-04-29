@@ -9,7 +9,7 @@ import { Tabs, TabList, TabTrigger, TabPanel } from '@/shared/components/ui/Tabs
 import { Button } from '@/shared/components/ui/Button'
 import { MetricSkeleton } from '@/shared/components/ui/Loader'
 import { ChevronLeftIcon, ChevronDownIcon, ArrowUpIcon } from '@/shared/components/ui/Icons'
-import { useIngest, useMetrics, useProjects, useResetDataset } from '@/shared/api/hooks'
+import { useIngest, useMetrics, useProjects, useRisks, useResetDataset } from '@/shared/api/hooks'
 import { useToast } from '@/shared/components/ui/Toast'
 import { formatCurrency, formatPercent, formatNumber } from '@/shared/utils'
 import type { TimeRange } from '@/shared/utils'
@@ -87,6 +87,8 @@ export function DashboardPage() {
   const [isIngested, setIsIngested] = useState(false)
   // Track scroll position for scroll-to-top button
   const [showScrollTop, setShowScrollTop] = useState(false)
+  // Project filter for risks tab
+  const [selectedProject, setSelectedProject] = useState<string | null>(null)
 
   // Show scroll-to-top button when scrolled past 300px
   useEffect(() => {
@@ -118,7 +120,14 @@ export function DashboardPage() {
     isLoading: projectsLoading, 
     isError: projectsError,
     refetch: refetchProjects,
-  } = useProjects(timeRange, { enabled: isIngested && activeTab === 'projects' })
+  } = useProjects(timeRange, { enabled: isIngested && (activeTab === 'projects' || activeTab === 'risks') })
+
+  const { 
+    data: risksData, 
+    isLoading: risksLoading, 
+    isError: risksError,
+    refetch: refetchRisks,
+  } = useRisks(timeRange, { enabled: isIngested && activeTab === 'risks', project: selectedProject })
 
   // ── Analyze handler — calls POST /ingest then enables data fetching ──────
   const handleAnalyze = (_csvText: string, files: File[]) => {
@@ -255,7 +264,7 @@ export function DashboardPage() {
           <TabTrigger id="projects">Projects</TabTrigger>
           <TabTrigger id="employees">Employees</TabTrigger>
           <TabTrigger id="risks">Risks & recs</TabTrigger>
-          <TabTrigger id="qa">Q&A</TabTrigger>
+          <TabTrigger id="qa">Ask AI</TabTrigger>
         </TabList>
         <TabPanel id="projects">
           <ProjectsList 
@@ -269,7 +278,16 @@ export function DashboardPage() {
           <EmployeesList employees={[]} isLoading={false} />
         </TabPanel>
         <TabPanel id="risks">
-          <RisksPanel risks={[]} recommendations={[]} isLoading={false} />
+          <RisksPanel 
+            data={risksData} 
+            isLoading={risksLoading} 
+            isError={risksError}
+            onRetry={() => refetchRisks()}
+            projects={projects ?? []}
+            projectsLoading={projectsLoading}
+            selectedProject={selectedProject}
+            onProjectChange={setSelectedProject}
+          />
         </TabPanel>
         <TabPanel id="qa">
           <QAPanel />
