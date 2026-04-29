@@ -86,3 +86,109 @@ export function AnalysisLoader() {
     </div>
   )
 }
+
+// ─── Risks & Recommendations Skeletons ───────────────────────────────────────
+
+export function RiskOverviewSkeleton() {
+  return (
+    <div className="flex items-center gap-3 mb-4">
+      <Skeleton height={16} width={80} />
+      <Skeleton height={16} width={4} rounded="full" />
+      <Skeleton height={16} width={120} />
+      <div className="flex gap-1 ml-auto">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <Skeleton key={i} height={8} width={8} rounded="full" />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export function RiskCategoryTabsSkeleton() {
+  return (
+    <div className="flex items-center gap-1.5 mb-4">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} height={28} width={i === 0 ? 50 : 90} rounded="full" />
+      ))}
+    </div>
+  )
+}
+
+export function RiskCardSkeleton() {
+  return (
+    <div 
+      className="rounded-[12px] p-4 mb-2 relative overflow-hidden"
+      style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}
+    >
+      <div className="absolute left-0 top-0 bottom-0 w-1 skeleton" />
+      <div className="flex items-start gap-3">
+        <Skeleton height={28} width={28} rounded="md" />
+        <div className="flex-1 space-y-2">
+          <div className="flex items-center justify-between">
+            <Skeleton height={14} width="60%" />
+            <Skeleton height={20} width={60} rounded="full" />
+          </div>
+          <Skeleton height={12} width="90%" />
+          <Skeleton height={12} width="70%" />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function RecommendationCardSkeleton() {
+  return (
+    <div 
+      className="rounded-[12px] p-4 mb-2"
+      style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}
+    >
+      <div className="flex items-start gap-3">
+        <Skeleton height={24} width={80} rounded="full" />
+        <div className="flex-1 space-y-2">
+          <Skeleton height={14} width="85%" />
+          <div className="flex items-center gap-4">
+            <Skeleton height={12} width={120} />
+            <Skeleton height={12} width={100} />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export function CollapsibleSectionSkeleton({ collapsed = false }: { collapsed?: boolean }) {
+  return (
+    <div 
+      className="rounded-[14px] mb-4 overflow-hidden"
+      style={{ background: 'var(--surface-base)', border: '1px solid var(--border-subtle)' }}
+    >
+      <div className="flex items-center justify-between px-4 py-3">
+        <div className="flex items-center gap-3">
+          <Skeleton height={16} width={16} rounded="sm" />
+          <Skeleton height={16} width={100} />
+          <Skeleton height={16} width={4} rounded="full" />
+          <Skeleton height={16} width={60} />
+        </div>
+        <Skeleton height={16} width={16} rounded="sm" />
+      </div>
+      {!collapsed && (
+        <div className="px-4 pb-4 space-y-2">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <RiskCardSkeleton key={i} />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export function RisksPanelSkeleton() {
+  return (
+    <div>
+      <RiskOverviewSkeleton />
+      <CollapsibleSectionSkeleton />
+      <CollapsibleSectionSkeleton />
+      <CollapsibleSectionSkeleton collapsed />
+    </div>
+  )
+}

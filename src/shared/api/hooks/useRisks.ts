@@ -1,30 +1,29 @@
 import { useQuery } from '@tanstack/react-query'
-import type { Risk, Recommendation } from '../types'
+import { api } from '../client'
+import { transformRisksResponse, buildRangeParam } from '../transforms'
+import type { RisksApiResponse, RisksData } from '../types'
 
 interface UseRisksOptions {
   enabled?: boolean
-}
-
-interface RisksData {
-  risks: Risk[]
-  recommendations: Recommendation[]
+  project?: string | null
 }
 
 /**
- * Stub hook for /risks endpoint
- * Returns empty data until API is implemented
+ * Query hook for /risks-recommendations endpoint
+ * Fetches and transforms risks data based on time range and optional project filter
  */
-export function useRisks(_range: string, options: UseRisksOptions = {}) {
-  const { enabled = false } = options
+export function useRisks(range: string, options: UseRisksOptions = {}) {
+  const { enabled = true, project = null } = options
 
   return useQuery<RisksData>({
-    queryKey: ['risks', _range],
+    queryKey: ['risks', range, project],
     queryFn: async () => {
-      // TODO: Implement when API is ready
-      // const queryString = buildRangeParam(range)
-      // const response = await api.get<RisksApiResponse>(`/risks${queryString}`)
-      // return transformRisksResponse(response)
-      return { risks: [], recommendations: [] }
+      let queryString = buildRangeParam(range)
+      if (project) {
+        queryString += `&project=${encodeURIComponent(project)}`
+      }
+      const response = await api.get<RisksApiResponse>(`/risks-recommendations${queryString}`)
+      return transformRisksResponse(response)
     },
     enabled,
     staleTime: 30_000,

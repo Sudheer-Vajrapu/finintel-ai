@@ -114,8 +114,159 @@ export interface Employee {
 }
 
 // ─── Risks & Recommendations ──────────────────────────────────────────────────
-export type RiskSeverity = 'high' | 'medium' | 'low'
+export type RiskSeverity = 'critical' | 'high' | 'medium' | 'low' | 'positive'
+export type RiskCategory = 'financial' | 'workforce' | 'operational' | 'general'
+export type RiskPriority = 'IMMEDIATE' | 'SHORT_TERM' | 'LONG_TERM'
+export type PerformanceBand = 'Star' | 'Solid' | 'Watch'
 
+export interface RiskMetrics {
+  avg_margin_pct?: number
+  target_margin?: number
+  gap_pct?: number
+  billing_rate?: number
+  cost_rate?: number
+  rate_ratio?: number
+  buffer_pct?: number
+  avg_utilisation_pct?: number
+  total_profit?: number
+  performance_score?: number
+  performance_band?: PerformanceBand
+}
+
+export interface RiskItem {
+  type: string
+  category: RiskCategory
+  severity: RiskSeverity
+  entity: string
+  project: string
+  description: string
+  recommendation: string
+  owner: string
+  deadline: string
+  metrics: RiskMetrics
+  linked_employees: string[]
+  revenue_contribution_pct: number
+  priority: RiskPriority
+}
+
+export interface RecommendationItem {
+  action: string
+  owner: string
+  deadline: string
+  priority: RiskPriority
+  priority_score: number
+  category: RiskCategory
+  linked_employees: string[]
+  related_risk_type: string
+}
+
+export interface EmployeeScorecardPerformance {
+  score: number
+  band: PerformanceBand
+  breakdown: {
+    margin_score: number
+    utilisation_score: number
+    attendance_score: number
+  }
+  inputs: {
+    margin_pct: number
+    utilisation_pct: number
+    leave_pct: number
+    months_covered: number
+  }
+}
+
+export interface EmployeeScorecard {
+  employee: string
+  project: string
+  months_covered: number
+  latest_month: string
+  performance: EmployeeScorecardPerformance
+  total_revenue: number
+  total_profit: number
+  avg_utilisation: number
+}
+
+export interface RiskOverview {
+  total_risks: number
+  action_needed: number
+  by_severity: Record<RiskSeverity, number>
+  by_category: Record<RiskCategory, number>
+  highest_priority: string
+}
+
+export interface ExecutiveSummary {
+  top_critical_actions: Array<{
+    type: string
+    entity: string
+    project: string
+    severity: RiskSeverity
+    priority: RiskPriority
+    owner: string
+    deadline: string
+    estimated_impact: number
+  }>
+  financial_exposure: {
+    estimated_total: number
+    components: {
+      loss_making_projects: number
+      loss_making_employees: number
+      bench_cost: number
+      low_utilisation_gap: number
+      high_leave_impact: number
+    }
+  }
+  execution_load: {
+    total_recommendations: number
+    immediate_actions: number
+    short_term_actions: number
+    recurring_signals: number
+  }
+}
+
+export interface RisksApiResponse {
+  overview: RiskOverview
+  executive_summary: ExecutiveSummary
+  risks: RiskItem[]
+  financial_risks: RiskItem[]
+  workforce_risks: RiskItem[]
+  operational_risks: RiskItem[]
+  positive_signals: RiskItem[]
+  recommendations: RecommendationItem[]
+  employee_scorecards: EmployeeScorecard[]
+  ai_insights: string
+  summary: {
+    total_revenue: number
+    total_cost: number
+    total_profit: number
+    avg_margin_pct: number
+    total_employees: number
+    total_hours: number
+  }
+  meta: {
+    time_range: string
+    total_employees: number
+    total_risks: number
+    action_needed: number
+    records_analysed: number
+  }
+}
+
+// Normalized risks data for UI consumption
+export interface RisksData {
+  overview: RiskOverview
+  risks: RiskItem[]
+  financialRisks: RiskItem[]
+  workforceRisks: RiskItem[]
+  operationalRisks: RiskItem[]
+  positiveSignals: RiskItem[]
+  recommendations: RecommendationItem[]
+  employeeScorecards: EmployeeScorecard[]
+  aiInsights: string
+  meta: RisksApiResponse['meta']
+}
+
+// Legacy types for backward compatibility
 export interface Risk {
   id: string
   title: string
@@ -144,10 +295,16 @@ export interface AskRequest {
   context?: string
 }
 
+export type AskVisualType = 'metric' | 'text' | 'table'
+
 export interface AskResponse {
   answer: string
   sources?: string[]
   confidence?: number
+  visual_type?: AskVisualType
+  summary?: string
+  columns?: string[]
+  data?: (string | number | null)[][] | Record<string, string | number | null>[]
 }
 
 // ─── Shared ───────────────────────────────────────────────────────────────────

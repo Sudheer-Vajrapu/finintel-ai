@@ -1,6 +1,9 @@
-import { useRef, useState, useEffect } from 'react'
-import { ArrowRightIcon, SparklesIcon, AlertTriangleIcon } from '@/shared/components/ui/Icons'
+import { useRef, useState } from 'react'
+import { ArrowRightIcon, AlertTriangleIcon, CircuitIcon } from '@/shared/components/ui/Icons'
+import { Skeleton } from '@/shared/components/ui/Loader'
 import { useAsk, getLocalAnswer } from '../hooks/useAsk'
+import { QAResponseRenderer } from './QAResponseRenderer'
+import type { AskResponse } from '@/shared/api/types'
 import type { AnalysisResult } from '@/shared/utils'
 
 const QUICK_QUESTIONS = [
@@ -10,32 +13,20 @@ const QUICK_QUESTIONS = [
   'Give me a summary',
 ]
 
-function useTypingEffect(text: string, speed = 10) {
-  const [displayed, setDisplayed] = useState('')
-  const [done, setDone] = useState(false)
-  useEffect(() => {
-    if (!text) { setDisplayed(''); setDone(false); return }
-    setDisplayed(''); setDone(false)
-    let i = 0
-    const id = setInterval(() => {
-      setDisplayed(text.slice(0, ++i))
-      if (i >= text.length) { clearInterval(id); setDone(true) }
-    }, speed)
-    return () => clearInterval(id)
-  }, [text, speed])
-  return { displayed, done }
-}
-
-function ThinkingDots() {
+function LoadingSkeleton() {
   return (
-    <div className="flex items-center gap-1.5 py-0.5">
-      {[0, 160, 320].map(d => (
-        <span
-          key={d}
-          className="w-2 h-2 rounded-full bg-accent/50 animate-bounce"
-          style={{ animationDelay: `${d}ms`, animationDuration: '0.9s' }}
-        />
-      ))}
+    <div className="flex items-start gap-3">
+      <div
+        className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+        style={{ background: '#C7D2FE' }}
+      >
+        <CircuitIcon size={12} strokeWidth={2} className="text-indigo-600" />
+      </div>
+      <div className="flex-1 space-y-2 pt-1">
+        <Skeleton height={12} width="75%" />
+        <Skeleton height={12} width="50%" />
+        <Skeleton height={12} width="85%" />
+      </div>
     </div>
   )
 }
@@ -76,43 +67,46 @@ function AIErrorState({ message }: { message: string }) {
 }
 
 export function QAPanel({ localData }: { localData?: AnalysisResult | null }) {
-  const [query, setQuery]   = useState('')
-  const [answer, setAnswer] = useState('')
-  const inputRef            = useRef<HTMLInputElement>(null)
+  const [query, setQuery] = useState('')
+  const [response, setResponse] = useState<AskResponse | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
   const { mutate: ask, isPending, isError, error } = useAsk()
-  const { displayed, done } = useTypingEffect(isPending ? '' : answer)
 
   const handleAsk = (q?: string) => {
     const question = (q ?? query).trim()
     if (!question) return
     setQuery(question)
-    setAnswer('')
+    setResponse(null)
     ask(
       { query: question },
       {
-        onSuccess: data => setAnswer(data.answer),
-        onError:   ()   => { if (localData) setAnswer(getLocalAnswer(question, localData)) },
+        onSuccess: data => setResponse(data),
+        onError: () => {
+          if (localData) {
+            setResponse({ answer: getLocalAnswer(question, localData) })
+          }
+        },
       },
     )
   }
 
-  const showApiError = isError && !answer && !localData
+  const showApiError = isError && !response && !localData
   const errMsg = error instanceof Error ? error.message : 'Could not reach the AI service.'
 
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center gap-2.5 mb-4 pb-4 border-b border-[var(--border-subtle)]">
+      <div className="flex items-center gap-3 mb-4 pb-4 border-b border-[var(--border-subtle)]">
         <div
-          className="w-8 h-8 rounded-[10px] flex items-center justify-center flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' }}
+          className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
+          style={{ background: '#C7D2FE' }}
         >
-          <SparklesIcon size={15} strokeWidth={2} className="text-white" />
+          <CircuitIcon size={18} strokeWidth={2} className="text-indigo-600" />
         </div>
-        <div>
-          <p className="text-[14px] font-bold text-ink-primary tracking-tight">Ask AI</p>
-          <p className="text-[11px] text-ink-tertiary">Ask anything about your financial data</p>
-        </div>
+        <p className="text-[13px] text-ink-secondary leading-relaxed flex-1">
+          Ask questions about your projects, employees, margins, or risks. 
+          Get instant insights, trends, and forecasts powered by AI analysis of your financial data.
+        </p>
       </div>
 
       {/* Input row - stacked on mobile, inline on desktop */}
@@ -151,7 +145,7 @@ export function QAPanel({ localData }: { localData?: AnalysisResult | null }) {
       {showApiError && <AIErrorState message={errMsg} />}
 
       {/* Answer area — only shown when NOT an error */}
-      {!showApiError && (isPending || answer) && (
+      {!showApiError && (isPending || response) && (
         <div
           className="rounded-[14px] p-4 mb-4 min-h-[80px] animate-fade-in"
           style={{
@@ -160,30 +154,14 @@ export function QAPanel({ localData }: { localData?: AnalysisResult | null }) {
           }}
         >
           {isPending ? (
-            <div className="flex items-center gap-3">
-              <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0"
-                style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' }}
-              >
-                <SparklesIcon size={12} strokeWidth={2} className="text-white" />
-              </div>
-              <ThinkingDots />
-            </div>
+            <LoadingSkeleton />
           ) : (
-            <div className="flex items-start gap-3">
-              <div
-                className="w-6 h-6 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5"
-                style={{ background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)' }}
-              >
-                <SparklesIcon size={12} strokeWidth={2} className="text-white" />
-              </div>
-              <p className="text-[14px] text-ink-primary leading-[1.75] flex-1">
-                {displayed}
-                {!done && (
-                  <span className="inline-block w-0.5 h-[15px] bg-accent ml-0.5 align-middle animate-pulse" />
-                )}
-              </p>
-            </div>
+            response && (
+              <QAResponseRenderer
+                response={response}
+                isTyping={response.visual_type !== 'table'}
+              />
+            )
           )}
         </div>
       )}

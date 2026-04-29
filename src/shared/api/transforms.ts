@@ -3,6 +3,8 @@ import type {
   Metrics,
   ProjectsApiResponse,
   Project,
+  RisksApiResponse,
+  RisksData,
 } from './types'
 
 /**
@@ -63,4 +65,23 @@ export function buildRangeParam(range: string): string {
     '1y': '?range=12',
   }
   return rangeMap[range] ?? ''
+}
+
+/**
+ * Transform raw /risks API response to normalized UI format
+ * Maps snake_case backend fields to camelCase for consistency
+ */
+export function transformRisksResponse(response: RisksApiResponse): RisksData {
+  return {
+    overview: response.overview,
+    risks: response.risks,
+    financialRisks: response.financial_risks,
+    workforceRisks: response.workforce_risks,
+    operationalRisks: response.operational_risks,
+    positiveSignals: response.positive_signals,
+    recommendations: response.recommendations,
+    employeeScorecards: response.employee_scorecards,
+    aiInsights: response.ai_insights,
+    meta: response.meta,
+  }
 }
