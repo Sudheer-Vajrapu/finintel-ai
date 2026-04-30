@@ -1,27 +1,35 @@
 import { useQuery } from '@tanstack/react-query'
-import type { Employee } from '../types'
+import { api } from '../client'
+import { transformEmployeesResponse, buildRangeParam } from '../transforms'
+import type { EmployeesApiResponse, Employee } from '../types'
 
 interface UseEmployeesOptions {
   enabled?: boolean
+  project?: string | null
 }
 
 /**
- * Stub hook for /employees endpoint
- * Returns empty data until API is implemented
+ * Query hook for /employees endpoint
+ * Fetches and transforms employees data based on time range and optional project filter
  */
-export function useEmployees(_range: string, options: UseEmployeesOptions = {}) {
-  const { enabled = false } = options
+export function useEmployees(range: string, options: UseEmployeesOptions = {}) {
+  const { enabled = true, project = null } = options
 
   return useQuery<Employee[]>({
-    queryKey: ['employees', _range],
+    queryKey: ['employees', range, project],
     queryFn: async () => {
-      // TODO: Implement when API is ready
-      // const queryString = buildRangeParam(range)
-      // const response = await api.get<EmployeesApiResponse>(`/employees${queryString}`)
-      // return transformEmployeesResponse(response)
-      return []
+      // Build query string with range and optional project filter
+      let queryString = buildRangeParam(range)
+      
+      if (project) {
+        const separator = queryString ? '&' : '?'
+        queryString += `${separator}project=${encodeURIComponent(project)}`
+      }
+      
+      const response = await api.get<EmployeesApiResponse>(`/employees${queryString}`)
+      return transformEmployeesResponse(response)
     },
     enabled,
-    staleTime: 30_000,
+    staleTime: 30_000, // Consider data fresh for 30 seconds
   })
 }

@@ -3,6 +3,10 @@ import type {
   Metrics,
   ProjectsApiResponse,
   Project,
+  EmployeesApiResponse,
+  Employee,
+  EmployeeTag,
+  ContributionStatus,
   RisksApiResponse,
   RisksData,
 } from './types'
@@ -65,6 +69,49 @@ export function buildRangeParam(range: string): string {
     '1y': '?range=12',
   }
   return rangeMap[range] ?? ''
+}
+
+/**
+ * Map contribution status to employee tag
+ */
+function mapContributionToTag(status: ContributionStatus): EmployeeTag {
+  const mapping: Record<ContributionStatus, EmployeeTag> = {
+    'High': 'high_contributor',
+    'Optimal': 'optimal',
+    'Low': 'underutilized',
+  }
+  return mapping[status] ?? 'optimal'
+}
+
+/**
+ * Generate a stable ID from employee name
+ */
+function generateEmployeeId(name: string): string {
+  return `emp-${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`
+}
+
+/**
+ * Transform raw /employees API response to normalized UI format
+ * Maps snake_case backend fields to camelCase for consistency
+ */
+export function transformEmployeesResponse(response: EmployeesApiResponse): Employee[] {
+  const { employees } = response
+  
+  return employees.map((data) => ({
+    id: generateEmployeeId(data.employee_name),
+    name: data.employee_name,
+    hours: data.total_hours ?? 0,
+    revenue: data.total_revenue ?? 0,
+    profit: data.total_profit ?? 0,
+    cost: data.total_cost ?? 0,
+    grossMarginPct: data.gross_margin_pct ?? 0,
+    utilizationPct: data.utilization_pct ?? 0,
+    projects: data.projects ?? [],
+    tag: mapContributionToTag(data.contribution_status),
+    contributionStatus: data.contribution_status ?? 'Optimal',
+  }))
+  // Sort by revenue descending
+  .sort((a, b) => b.revenue - a.revenue)
 }
 
 /**
