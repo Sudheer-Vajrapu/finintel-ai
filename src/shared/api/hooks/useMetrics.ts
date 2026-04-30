@@ -5,19 +5,27 @@ import type { MetricsApiResponse, Metrics } from '../types'
 
 interface UseMetricsOptions {
   enabled?: boolean
+  project?: string | null
 }
 
 /**
  * Query hook for /metrics endpoint
- * Fetches and transforms metrics data based on time range
+ * Fetches and transforms metrics data based on time range and optional project filter
  */
 export function useMetrics(range: string, options: UseMetricsOptions = {}) {
-  const { enabled = true } = options
+  const { enabled = true, project = null } = options
 
   return useQuery<Metrics>({
-    queryKey: ['metrics', range],
+    queryKey: ['metrics', range, project],
     queryFn: async () => {
-      const queryString = buildRangeParam(range)
+      // Build query string with range and optional project filter
+      let queryString = buildRangeParam(range)
+      
+      if (project) {
+        const separator = queryString ? '&' : '?'
+        queryString += `${separator}project=${encodeURIComponent(project)}`
+      }
+      
       const response = await api.get<MetricsApiResponse>(`/metrics${queryString}`)
       return transformMetricsResponse(response)
     },

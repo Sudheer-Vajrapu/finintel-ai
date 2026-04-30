@@ -166,13 +166,26 @@ export function computeAnalysis(rows: CsvRow[]): AnalysisResult {
     else if (e.profit > avgMargin * totalRevenue / 100 / Object.keys(employeeMap).length * 1.5) tag = 'high_contributor'
     else tag = 'optimal'
 
+    // Map tag to contribution status
+    const contributionStatus: Employee['contributionStatus'] = 
+      tag === 'high_contributor' ? 'High' :
+      tag === 'optimal' ? 'Optimal' : 'Low'
+
+    const estimatedRevenue = Math.round(e.profit * 1.5)
+    const grossMarginPct = estimatedRevenue > 0 ? (e.profit / estimatedRevenue) * 100 : 0
+
     return {
       id: `emp-${i}`,
       name: e.name,
       hours: Math.round(e.hours),
+      revenue: estimatedRevenue,
       profit: Math.round(e.profit),
-      projects: [...e.projects],
+      cost: Math.round(estimatedRevenue - e.profit),
+      grossMarginPct: Math.round(grossMarginPct * 100) / 100,
+      utilizationPct: Math.min(100, ratio * 100),
+      projects: [...e.projects].map(p => ({ project_name: p, revenue: 0, profit: 0, hours: 0 })),
       tag,
+      contributionStatus,
     }
   }).sort((a, b) => b.profit - a.profit)
 

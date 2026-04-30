@@ -313,7 +313,7 @@ export function RisksPanel({
         <RiskOverviewHeader overview={data.overview} />
         {onProjectChange && (
           <div className="flex items-center gap-2">
-            <span className="text-[12px] font-medium text-ink-tertiary">Filter by:</span>
+            <span className="text-[12px] font-medium text-ink-tertiary">Filter by project:</span>
             <ProjectFilterDropdown
               projects={projects}
               selectedProject={selectedProject}

@@ -9,7 +9,7 @@ import { Tabs, TabList, TabTrigger, TabPanel } from '@/shared/components/ui/Tabs
 import { Button } from '@/shared/components/ui/Button'
 import { MetricSkeleton } from '@/shared/components/ui/Loader'
 import { ChevronLeftIcon, ChevronDownIcon, ArrowUpIcon } from '@/shared/components/ui/Icons'
-import { useIngest, useMetrics, useProjects, useRisks, useResetDataset } from '@/shared/api/hooks'
+import { useIngest, useMetrics, useProjects, useEmployees, useRisks, useResetDataset } from '@/shared/api/hooks'
 import { useToast } from '@/shared/components/ui/Toast'
 import { formatCurrency, formatPercent, formatNumber } from '@/shared/utils'
 import type { TimeRange } from '@/shared/utils'
@@ -89,6 +89,10 @@ export function DashboardPage() {
   const [showScrollTop, setShowScrollTop] = useState(false)
   // Project filter for risks tab
   const [selectedProject, setSelectedProject] = useState<string | null>(null)
+  // Separate project filter for employees tab
+  const [selectedEmployeeProject, setSelectedEmployeeProject] = useState<string | null>(null)
+  // Separate project filter for projects tab
+  const [selectedProjectsTabProject, setSelectedProjectsTabProject] = useState<string | null>(null)
 
   // Show scroll-to-top button when scrolled past 300px
   useEffect(() => {
@@ -108,19 +112,22 @@ export function DashboardPage() {
   const { success: toastSuccess, error: toastError } = useToast()
 
   // ── Data fetching hooks (enabled after successful ingest) ────────────────
+  // Determine which project filter to use for metrics based on active tab
+  const metricsProjectFilter = activeTab === 'employees' ? selectedEmployeeProject : null
+  
   const { 
     data: metrics, 
     isLoading: metricsLoading, 
     isError: metricsError,
     refetch: refetchMetrics,
-  } = useMetrics(timeRange, { enabled: isIngested })
+  } = useMetrics(timeRange, { enabled: isIngested, project: metricsProjectFilter })
 
   const { 
     data: projects, 
     isLoading: projectsLoading, 
     isError: projectsError,
     refetch: refetchProjects,
-  } = useProjects(timeRange, { enabled: isIngested && (activeTab === 'projects' || activeTab === 'risks') })
+  } = useProjects(timeRange, { enabled: isIngested && (activeTab === 'projects' || activeTab === 'employees' || activeTab === 'risks') })
 
   const { 
     data: risksData, 
@@ -128,6 +135,16 @@ export function DashboardPage() {
     isError: risksError,
     refetch: refetchRisks,
   } = useRisks(timeRange, { enabled: isIngested && activeTab === 'risks', project: selectedProject })
+
+  const {
+    data: employees,
+    isLoading: employeesLoading,
+    isError: employeesError,
+    refetch: refetchEmployees,
+  } = useEmployees(timeRange, { 
+    enabled: isIngested && activeTab === 'employees', 
+    project: selectedEmployeeProject 
+  })
 
   // ── Analyze handler — calls POST /ingest then enables data fetching ──────
   const handleAnalyze = (_csvText: string, files: File[]) => {
@@ -268,14 +285,29 @@ export function DashboardPage() {
         </TabList>
         <TabPanel id="projects">
           <ProjectsList 
-            projects={projects} 
+            projects={selectedProjectsTabProject 
+              ? projects?.filter(p => p.name === selectedProjectsTabProject)
+              : projects
+            } 
             isLoading={projectsLoading} 
             isError={projectsError}
             onRetry={() => refetchProjects()}
+            allProjects={projects ?? []}
+            selectedProject={selectedProjectsTabProject}
+            onProjectChange={setSelectedProjectsTabProject}
           />
         </TabPanel>
         <TabPanel id="employees">
-          <EmployeesList employees={[]} isLoading={false} />
+          <EmployeesList 
+            employees={employees}
+            isLoading={employeesLoading}
+            isError={employeesError}
+            onRetry={() => refetchEmployees()}
+            projects={projects ?? []}
+            projectsLoading={projectsLoading}
+            selectedProject={selectedEmployeeProject}
+            onProjectChange={setSelectedEmployeeProject}
+          />
         </TabPanel>
         <TabPanel id="risks">
           <RisksPanel 

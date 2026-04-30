@@ -103,14 +103,45 @@ export interface Project {
 
 // ─── Employees ────────────────────────────────────────────────────────────────
 export type EmployeeTag = 'optimal' | 'high_contributor' | 'underutilized' | 'overloaded'
+export type ContributionStatus = 'High' | 'Optimal' | 'Low'
 
+export interface EmployeeProject {
+  project_name: string
+  revenue: number
+  profit: number
+  hours: number
+}
+
+// Raw API response for /employees endpoint
+export interface EmployeesApiResponse {
+  time_range: string
+  count: number
+  employees: Array<{
+    employee_name: string
+    total_hours: number
+    total_revenue: number
+    total_profit: number
+    total_cost: number
+    gross_margin_pct: number
+    utilization_pct: number
+    projects: EmployeeProject[]
+    contribution_status: ContributionStatus
+  }>
+}
+
+// Normalized employee for UI consumption
 export interface Employee {
   id: string
   name: string
   hours: number
+  revenue: number
   profit: number
-  projects: string[]
+  cost: number
+  grossMarginPct: number
+  utilizationPct: number
+  projects: EmployeeProject[]
   tag: EmployeeTag
+  contributionStatus: ContributionStatus
 }
 
 // ─── Risks & Recommendations ──────────────────────────────────────────────────

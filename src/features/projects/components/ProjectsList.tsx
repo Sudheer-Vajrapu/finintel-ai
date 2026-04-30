@@ -1,8 +1,8 @@
-import { useState } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { Badge } from '@/shared/components/ui/Badge'
 import { CardSkeleton } from '@/shared/components/ui/Loader'
 import { EmptyState, ErrorState } from '@/shared/components/ui/EmptyState'
-import { TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronDownIcon, UsersIcon } from '@/shared/components/ui/Icons'
+import { TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronDownIcon, UsersIcon, XIcon } from '@/shared/components/ui/Icons'
 import { formatCurrency, formatPercent } from '@/shared/utils'
 import type { Project, ProjectStatus, ProjectTrend, TrendValue } from '@/shared/api/types'
 
@@ -184,6 +184,157 @@ const STATUS_FILTER_STYLES: Record<StatusFilter, {
 
 const STATUS_FILTERS: StatusFilter[] = ['all', 'Healthy', 'At Risk', 'Optimal']
 
+// ── Project Filter Dropdown ──────────────────────────────────────────────────
+function ProjectFilterDropdown({
+  projects,
+  selectedProject,
+  onProjectChange,
+}: {
+  projects: Project[]
+  selectedProject: string | null
+  onProjectChange: (project: string | null) => void
+}) {
+  const [isOpen, setIsOpen] = useState(false)
+  const [search, setSearch] = useState('')
+  const dropdownRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  const filteredProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  )
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false)
+        setSearch('')
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  useEffect(() => {
+    if (isOpen && inputRef.current) {
+      inputRef.current.focus()
+    }
+  }, [isOpen])
+
+  const handleSelect = (projectName: string | null) => {
+    onProjectChange(projectName)
+    setIsOpen(false)
+    setSearch('')
+  }
+
+  return (
+    <div className="flex items-center gap-2">
+      <span className="text-[12px] font-medium text-ink-tertiary">Filter by project:</span>
+      <div ref={dropdownRef} className="relative">
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className={[
+            'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
+            'border transition-all duration-150 cursor-pointer',
+            selectedProject
+              ? 'bg-accent/10 text-accent border-accent/30 dark:bg-accent/20 dark:border-accent/40'
+              : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
+          ].join(' ')}
+        >
+          <span className="truncate max-w-[140px]">
+            {selectedProject || 'All Projects'}
+          </span>
+          {selectedProject ? (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSelect(null)
+              }}
+              className="p-0.5 rounded-full hover:bg-accent/20 transition-colors"
+              aria-label="Clear project filter"
+            >
+              <XIcon size={10} strokeWidth={2.5} />
+            </button>
+          ) : (
+            <ChevronDownIcon
+              size={12}
+              strokeWidth={2}
+              className={[
+                'transition-transform duration-200',
+                isOpen ? 'rotate-180' : '',
+              ].join(' ')}
+            />
+          )}
+        </button>
+
+        {isOpen && (
+          <div
+            className={[
+              'absolute top-full right-0 mt-1 z-50 min-w-[200px] max-w-[280px]',
+              'bg-surface-base border border-[var(--border-default)] rounded-lg shadow-lg',
+              'overflow-hidden',
+            ].join(' ')}
+          >
+            <div className="p-2 border-b border-[var(--border-subtle)]">
+              <input
+                ref={inputRef}
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search projects..."
+                className={[
+                  'w-full px-2.5 py-1.5 text-[12px] rounded-md',
+                  'bg-surface-sunken border border-[var(--border-subtle)]',
+                  'text-ink-primary placeholder:text-ink-tertiary',
+                  'focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent',
+                ].join(' ')}
+              />
+            </div>
+
+            <div className="max-h-[240px] overflow-y-auto py-1">
+              <button
+                type="button"
+                onClick={() => handleSelect(null)}
+                className={[
+                  'w-full text-left px-3 py-2 text-[12px] transition-colors',
+                  !selectedProject
+                    ? 'bg-accent/10 text-accent font-medium'
+                    : 'text-ink-secondary hover:bg-surface-raised hover:text-ink-primary',
+                ].join(' ')}
+              >
+                All Projects
+              </button>
+
+              {filteredProjects.length > 0 ? (
+                filteredProjects.map((project) => (
+                  <button
+                    key={project.id}
+                    type="button"
+                    onClick={() => handleSelect(project.name)}
+                    className={[
+                      'w-full text-left px-3 py-2 text-[12px] transition-colors',
+                      selectedProject === project.name
+                        ? 'bg-accent/10 text-accent font-medium'
+                        : 'text-ink-secondary hover:bg-surface-raised hover:text-ink-primary',
+                    ].join(' ')}
+                  >
+                    <span className="block truncate">{project.name}</span>
+                  </button>
+                ))
+              ) : (
+                <p className="px-3 py-4 text-[11px] text-ink-tertiary text-center">
+                  No projects found
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function StatusFilterBar({ 
   activeFilter, 
   onFilterChange,
@@ -241,9 +392,25 @@ function StatusFilterBar({
 }
 
 // ── Projects List ─────────────────────────────────────────────────────────────
-export function ProjectsList({ projects, isLoading = false, isError = false, onRetry }: {
-  projects?: Project[]; isLoading?: boolean; isError?: boolean; onRetry?: () => void
-}) {
+export interface ProjectsListProps {
+  projects?: Project[]
+  isLoading?: boolean
+  isError?: boolean
+  onRetry?: () => void
+  allProjects?: Project[]
+  selectedProject?: string | null
+  onProjectChange?: (project: string | null) => void
+}
+
+export function ProjectsList({ 
+  projects, 
+  isLoading = false, 
+  isError = false, 
+  onRetry,
+  allProjects = [],
+  selectedProject = null,
+  onProjectChange,
+}: ProjectsListProps) {
   // Track multiple expanded cards (all collapsed by default)
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
@@ -261,12 +428,12 @@ export function ProjectsList({ projects, isLoading = false, isError = false, onR
   }
 
   // Calculate counts for each status
-  const statusCounts: Record<StatusFilter, number> = {
+  const statusCounts: Record<StatusFilter, number> = useMemo(() => ({
     all: projects?.length ?? 0,
     Healthy: projects?.filter(p => p.status === 'Healthy').length ?? 0,
     'At Risk': projects?.filter(p => p.status === 'At Risk').length ?? 0,
     Optimal: projects?.filter(p => p.status !== 'Healthy' && p.status !== 'At Risk').length ?? 0,
-  }
+  }), [projects])
 
   // Filter projects based on selected status
   const filteredProjects = projects?.filter(p => {
@@ -296,35 +463,76 @@ export function ProjectsList({ projects, isLoading = false, isError = false, onR
     })
   }
 
-  if (isLoading) return <div className="flex flex-col gap-3">{Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} lines={4} />)}</div>
-  if (isError) return <ErrorState message="Could not load project data." onRetry={onRetry} />
-  if (!projects?.length)
-    return <EmptyState title="No project data" description="Upload data and click Analyze to see project analytics." />
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-3">
+        {Array.from({ length: 3 }).map((_, i) => <CardSkeleton key={i} lines={4} />)}
+      </div>
+    )
+  }
+
+  if (isError) {
+    return <ErrorState message="Could not load project data." onRetry={onRetry} />
+  }
+
+  if (!projects?.length) {
+    return (
+      <div>
+        {onProjectChange && allProjects.length > 0 && (
+          <div className="mb-4">
+            <ProjectFilterDropdown
+              projects={allProjects}
+              selectedProject={selectedProject}
+              onProjectChange={onProjectChange}
+            />
+          </div>
+        )}
+        <EmptyState 
+          title="No project data" 
+          description={selectedProject 
+            ? `No data found for project "${selectedProject}".`
+            : "Upload data and click Analyze to see project analytics."
+          } 
+        />
+      </div>
+    )
+  }
 
   return (
     <div>
       {/* Filter bar with expand/collapse toggle */}
       <div className="flex items-center justify-between gap-4 mb-4 flex-wrap">
+        {/* Left side: Status filter */}
         <StatusFilterBar 
           activeFilter={statusFilter}
           onFilterChange={setStatusFilter}
           counts={statusCounts}
         />
         
-        {/* Expand/Collapse All button */}
-        {filteredProjects && filteredProjects.length > 0 && (
-          <button
-            onClick={toggleAll}
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[14px] font-medium font-sans cursor-pointer border transition-all duration-150 bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
-          >
-            <ChevronDownIcon 
-              size={12} 
-              strokeWidth={2.5} 
-              className={`transition-transform duration-300 ${allExpanded ? 'rotate-180' : ''}`} 
+        {/* Right side: Project filter + Expand/Collapse All */}
+        <div className="flex items-center gap-3 flex-wrap">
+          {onProjectChange && allProjects.length > 0 && (
+            <ProjectFilterDropdown
+              projects={allProjects}
+              selectedProject={selectedProject}
+              onProjectChange={onProjectChange}
             />
-            {allExpanded ? 'Collapse All' : 'Expand All'}
-          </button>
-        )}
+          )}
+          {filteredProjects && filteredProjects.length > 0 && (
+            <button
+              onClick={toggleAll}
+              aria-label={allExpanded ? 'Collapse all project cards' : 'Expand all project cards'}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium font-sans cursor-pointer border transition-all duration-150 bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
+            >
+              <ChevronDownIcon 
+                size={12} 
+                strokeWidth={2.5} 
+                className={`transition-transform duration-300 ${allExpanded ? 'rotate-180' : ''}`} 
+              />
+              {allExpanded ? 'Collapse All' : 'Expand All'}
+            </button>
+          )}
+        </div>
       </div>
       
       {/* Projects list */}
