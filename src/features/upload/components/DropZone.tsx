@@ -17,7 +17,9 @@ function isAllowed(name: string): boolean {
 function fmtSize(bytes: number): string {
   if (bytes < 1024) return `${bytes}B`
   if (bytes < 1_048_576) return `${Math.round(bytes / 1024)}KB`
-  return `${(bytes / 1_048_576).toFixed(1)}MB`
+  if (bytes < 1_073_741_824) return `${(bytes / 1_048_576).toFixed(1)}MB`
+  if (bytes < 1_099_511_627_776) return `${(bytes / 1_073_741_824).toFixed(2)}GB`
+  return `${(bytes / 1_099_511_627_776).toFixed(2)}TB`
 }
 
 function truncateMiddle(str: string, maxLen: number): string {
@@ -200,7 +202,7 @@ export function DropZone({ files, onFilesChange, disabled = false }: DropZonePro
           {/* File count footer */}
           <div className="px-3 py-2 bg-surface-raised border-t border-[var(--border-subtle)] flex items-center justify-between">
             <span className="text-[11px] font-medium text-ink-secondary">
-              {files.length} file{files.length !== 1 ? 's' : ''} ready
+              {files.length} file{files.length !== 1 ? 's' : ''} ready · {fmtSize(files.reduce((sum, f) => sum + f.size, 0))}
             </span>
             <button
               onClick={() => { if (!disabled) onFilesChange([]) }}

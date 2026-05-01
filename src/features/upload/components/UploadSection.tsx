@@ -2,10 +2,10 @@ import { useState, useRef } from 'react'
 import { DropZone } from './DropZone'
 import { Button } from '@/shared/components/ui/Button'
 import { ErrorBanner } from '@/shared/components/ui/EmptyState'
-import { ArrowRightIcon, InfoIcon, UploadIcon, FileTextIcon, TrashIcon } from '@/shared/components/ui/Icons'
+import { ArrowRightIcon, InfoIcon, UploadIcon, FileTextIcon, TrashIcon, AlertTriangleIcon } from '@/shared/components/ui/Icons'
 import { useToast } from '@/shared/components/ui/Toast'
 import { useResetDataset } from '@/shared/api/hooks'
-import { isValidCSV, SAMPLE_CSV } from '@/shared/utils'
+import { isValidCSV } from '@/shared/utils'
 
 type InputMode = 'upload' | 'paste'
 
@@ -33,12 +33,6 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
     } else {
       setFiles([])
     }
-  }
-
-  const handleLoadSample = () => {
-    // Load sample triggers immediate analysis
-    toastSuccess('Loading sample data', '21 records ready to analyze')
-    onAnalyze(SAMPLE_CSV, [])
   }
 
   const handleResetData = () => {
@@ -119,17 +113,17 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
           {/* Segmented control tabs */}
           <div className="flex justify-center mb-6">
             <div className={[
-              'inline-flex p-1 bg-surface-raised rounded-xl border border-[var(--border-default)]',
+              'inline-flex p-1 bg-surface-raised rounded-full border border-[var(--border-default)]',
               isLoading ? 'opacity-60' : '',
             ].join(' ')}>
               <button
                 onClick={() => handleModeChange('upload')}
                 disabled={isLoading}
                 className={[
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200',
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors duration-200',
                   mode === 'upload'
                     ? 'bg-accent text-accent-text shadow-sm dark:bg-surface-base dark:text-accent dark:border dark:border-accent-border'
-                    : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-base/50',
+                    : 'text-ink-secondary hover:text-ink-primary hover:bg-[var(--surface-base)]',
                   isLoading ? 'cursor-not-allowed' : '',
                 ].join(' ')}
               >
@@ -140,15 +134,15 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
                 onClick={() => handleModeChange('paste')}
                 disabled={isLoading}
                 className={[
-                  'flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200',
+                  'flex items-center gap-2 px-4 py-2 rounded-full text-[13px] font-semibold transition-colors duration-200',
                   mode === 'paste'
                     ? 'bg-accent text-accent-text shadow-sm dark:bg-surface-base dark:text-accent dark:border dark:border-accent-border'
-                    : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-base/50',
+                    : 'text-ink-secondary hover:text-ink-primary hover:bg-[var(--surface-base)]',
                   isLoading ? 'cursor-not-allowed' : '',
                 ].join(' ')}
               >
                 <FileTextIcon size={14} strokeWidth={2} />
-                Paste CSV
+                Raw Input
               </button>
             </div>
           </div>
@@ -157,39 +151,38 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
           {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
 
           {/* Tab content with smooth transitions */}
-          <div className="min-h-[280px] relative">
+          <div className="min-h-[280px] relative overflow-hidden">
             <div 
               className={[
-                'transition-all duration-200 ease-out',
-                mode === 'upload' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none',
+                'transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                mode === 'upload' 
+                  ? 'opacity-100 translate-x-0 scale-100' 
+                  : 'opacity-0 -translate-x-8 scale-95 absolute inset-0 pointer-events-none',
               ].join(' ')}
             >
               <DropZone files={files} onFilesChange={setFiles} disabled={isLoading} />
             </div>
             <div 
               className={[
-                'transition-all duration-200 ease-out',
-                mode === 'paste' ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4 absolute inset-0 pointer-events-none',
+                'transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]',
+                mode === 'paste' 
+                  ? 'opacity-100 translate-x-0 scale-100' 
+                  : 'opacity-0 translate-x-8 scale-95 absolute inset-0 pointer-events-none',
               ].join(' ')}
             >
-              <textarea
-                value={csvText}
-                onChange={e => { setCsvText(e.target.value); setError(null) }}
-                placeholder={
-                  'employee,project,date,hours,billing_rate,cost_rate\n' +
-                  'Alice,Alpha,2024-01-10,8,150,80\n' +
-                  'Bob,Beta,2024-01-12,9,120,70\n' +
-                  'Charlie,Alpha,2024-01-15,7,140,75\n...'
-                }
+              {/* Disabled state with work in progress message */}
+              <div 
                 className={[
-                  'w-full h-[280px] px-4 py-3.5 font-mono text-[12px] leading-relaxed',
-                  'border border-[var(--border-default)] rounded-xl bg-surface-base text-ink-primary',
-                  'placeholder:text-ink-tertiary resize-none outline-none',
-                  'transition-all focus:border-accent focus:ring-2 focus:ring-accent-light',
+                  'w-full h-[280px] flex flex-col items-center justify-center gap-3',
+                  'border border-[var(--border-default)] rounded-xl bg-surface-raised',
                 ].join(' ')}
-                spellCheck={false}
-                disabled={isLoading}
-              />
+              >
+                <div className="w-12 h-12 rounded-full bg-warning-bg flex items-center justify-center">
+                  <AlertTriangleIcon size={24} strokeWidth={2} className="text-warning-text" />
+                </div>
+                <p className="text-[14px] font-semibold text-ink-secondary">Work in progress</p>
+                <p className="text-[12px] text-ink-tertiary">This feature is coming soon</p>
+              </div>
             </div>
           </div>
 
@@ -232,17 +225,6 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
           </div>
         </div>
 
-        {/* Load sample data link — below the card */}
-        <div className="text-center mt-5">
-          <button
-            onClick={handleLoadSample}
-            disabled={isLoading}
-            className="text-[13px] text-ink-secondary hover:text-accent transition-colors disabled:opacity-50"
-          >
-            Don't have data?{' '}
-            <span className="font-semibold text-accent hover:underline">Load sample CSV</span>
-          </button>
-        </div>
       </div>
     </div>
   )

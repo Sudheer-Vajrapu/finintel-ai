@@ -30,7 +30,7 @@ function useThemeMode() {
         root.classList.remove('dark')
       }
       setResolvedDark(isDark)
-      const timeout = setTimeout(() => root.classList.remove('theme-transition'), 350)
+      const timeout = setTimeout(() => root.classList.remove('theme-transition'), 450)
       return () => clearTimeout(timeout)
     }
 
