@@ -1,7 +1,6 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import { useAuth } from '@/app/providers/AuthProvider'
-import { LogOutIcon, SunIcon, MoonIcon, MenuIcon, XIcon, MonitorIcon } from '../ui/Icons'
+import { SunIcon, MoonIcon, MenuIcon, XIcon, MonitorIcon } from '../ui/Icons'
 
 type ThemeMode = 'light' | 'dark' | 'system'
 
@@ -61,8 +60,6 @@ function useThemeMode() {
 }
 
 export function Topbar() {
-  const { isAuthenticated, user, logout } = useAuth()
-  const navigate = useNavigate()
   const { mode, setMode, isDark } = useThemeMode()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
