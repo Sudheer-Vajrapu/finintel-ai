@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback } from 'react'
 import { RisksPanelSkeleton } from '@/shared/components/ui/Loader'
 import { CollapsibleSection } from '@/shared/components/ui/CollapsibleSection'
+import { VirtualizedList } from '@/shared/components/ui/VirtualizedList'
 import { EmptyState, ErrorState } from '@/shared/components/ui/EmptyState'
 import { RiskCategoryTabs, type CategoryFilter, type CategoryCount } from './RiskCategoryTabs'
 import { SeverityFilterBar, type SeverityFilter, type SeverityCount } from './SeverityFilter'
@@ -9,7 +10,7 @@ import { AIInsightsBanner } from './AIInsightsBanner'
 import { RiskCard } from './RiskCard'
 import { RecommendationCard } from './RecommendationCard'
 import { ScorecardsSection } from './ScorecardsSection'
-import type { RisksData, RiskItem, RiskSeverity, Project } from '@/shared/api/types'
+import type { RisksData, RiskItem, RiskSeverity, Project, RecommendationItem } from '@/shared/api/types'
 
 // ─── Overview Header ─────────────────────────────────────────────────────────
 function RiskOverviewHeader({ overview }: { overview: RisksData['overview'] }) {
@@ -87,6 +88,14 @@ interface RisksSectionProps {
 function RisksSection({ risks, overview, onViewScorecard, onViewRecommendation }: RisksSectionProps) {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all')
   const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all')
+  const [cardResetKey, setCardResetKey] = useState(0)
+
+  const handleSectionExpandChange = (isExpanded: boolean) => {
+    if (!isExpanded) {
+      // Increment reset key to collapse all cards
+      setCardResetKey(prev => prev + 1)
+    }
+  }
 
   // Filter out positive signals from risks
   const nonPositiveRisks = useMemo(() => 
@@ -130,7 +139,12 @@ function RisksSection({ risks, overview, onViewScorecard, onViewRecommendation }
   )
 
   return (
-    <CollapsibleSection title="Risks" summary={risksSummary} defaultExpanded={true}>
+    <CollapsibleSection 
+      title="Risks" 
+      summary={risksSummary} 
+      defaultExpanded={false}
+      onExpandChange={handleSectionExpandChange}
+    >
       <RiskCategoryTabs
         activeCategory={categoryFilter}
         onCategoryChange={setCategoryFilter}
@@ -142,14 +156,19 @@ function RisksSection({ risks, overview, onViewScorecard, onViewRecommendation }
         counts={severityCounts}
       />
       {filteredRisks.length > 0 ? (
-        filteredRisks.map((risk, idx) => (
-          <RiskCard 
-            key={`${risk.type}-${risk.entity}-${idx}`} 
-            risk={risk}
-            onViewScorecard={onViewScorecard}
-            onViewRecommendation={onViewRecommendation}
-          />
-        ))
+        <VirtualizedList
+          items={filteredRisks}
+          maxHeight={500}
+          renderItem={(risk, idx) => (
+            <RiskCard 
+              key={`${risk.type}-${risk.entity}-${idx}`} 
+              risk={risk}
+              resetKey={cardResetKey}
+              onViewScorecard={onViewScorecard}
+              onViewRecommendation={onViewRecommendation}
+            />
+          )}
+        />
       ) : (
         <p className="text-center py-6 text-ink-tertiary text-[13px]">
           No risks match the selected filters.
@@ -163,7 +182,7 @@ function RisksSection({ risks, overview, onViewScorecard, onViewRecommendation }
 interface RecommendationsSectionProps {
   recommendations: RisksData['recommendations']
   highlightedId?: string | null
-  forceExpand?: boolean
+  forceExpand?: number  // Increment to trigger expansion
 }
 
 function RecommendationsSection({ recommendations, highlightedId, forceExpand }: RecommendationsSectionProps) {
@@ -192,18 +211,22 @@ function RecommendationsSection({ recommendations, highlightedId, forceExpand }:
 
   return (
     <CollapsibleSection title="Recommendations" summary={summary} defaultExpanded={false} forceExpand={forceExpand}>
-      {recommendations.map((rec, idx) => {
-        const recId = `recommendation-${idx}`
-        const isHighlighted = highlightedId === recId
-        return (
-          <RecommendationCard 
-            key={`${rec.related_risk_type}-${idx}`} 
-            recommendation={rec}
-            id={recId}
-            isHighlighted={isHighlighted}
-          />
-        )
-      })}
+      <VirtualizedList
+        items={recommendations}
+        maxHeight={400}
+        renderItem={(rec: RecommendationItem, idx: number) => {
+          const recId = `recommendation-${idx}`
+          const isHighlighted = highlightedId === recId
+          return (
+            <RecommendationCard 
+              key={`${rec.related_risk_type}-${idx}`} 
+              recommendation={rec}
+              id={recId}
+              isHighlighted={isHighlighted}
+            />
+          )
+        }}
+      />
     </CollapsibleSection>
   )
 }
@@ -231,8 +254,8 @@ export function RisksPanel({
   onProjectChange,
 }: RisksPanelProps) {
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
-  const [expandRecommendations, setExpandRecommendations] = useState(false)
-  const [expandScorecards, setExpandScorecards] = useState(false)
+  const [expandRecommendations, setExpandRecommendations] = useState(0)
+  const [expandScorecards, setExpandScorecards] = useState(0)
 
   const scrollToAndHighlight = useCallback((targetId: string, expandSection: () => void) => {
     expandSection()
@@ -257,7 +280,7 @@ export function RisksPanel({
     ) ?? -1
     if (scorecardIndex >= 0) {
       const targetId = `scorecard-${scorecardIndex}`
-      scrollToAndHighlight(targetId, () => setExpandScorecards(true))
+      scrollToAndHighlight(targetId, () => setExpandScorecards(prev => prev + 1))
     }
   }, [scrollToAndHighlight, data?.employeeScorecards])
 
@@ -268,7 +291,7 @@ export function RisksPanel({
     ) ?? -1
     if (recIndex >= 0) {
       const targetId = `recommendation-${recIndex}`
-      scrollToAndHighlight(targetId, () => setExpandRecommendations(true))
+      scrollToAndHighlight(targetId, () => setExpandRecommendations(prev => prev + 1))
     }
   }, [scrollToAndHighlight, data?.recommendations])
 

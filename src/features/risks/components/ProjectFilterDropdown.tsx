@@ -57,7 +57,7 @@ export function ProjectFilterDropdown({
           'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
           'border transition-all duration-150 cursor-pointer',
           selectedProject
-            ? 'bg-accent/10 text-accent border-accent/30 dark:bg-accent/20 dark:border-accent/40'
+            ? 'bg-accent/10 text-ink-primary border-accent/30 dark:bg-accent/20 dark:border-accent/40'
             : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
           isLoading ? 'opacity-60 cursor-not-allowed' : '',
         ].join(' ')}

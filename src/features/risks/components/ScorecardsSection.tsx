@@ -1,5 +1,6 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { CollapsibleSection } from '@/shared/components/ui/CollapsibleSection'
+import { VirtualizedList } from '@/shared/components/ui/VirtualizedList'
 import { EmployeeScorecardCard } from './EmployeeScorecardCard'
 import type { EmployeeScorecard, PerformanceBand } from '@/shared/api/types'
 
@@ -7,10 +8,19 @@ interface ScorecardsSectionProps {
   scorecards: EmployeeScorecard[]
   defaultExpanded?: boolean
   highlightedId?: string | null
-  forceExpand?: boolean
+  forceExpand?: number  // Increment to trigger expansion
 }
 
 export function ScorecardsSection({ scorecards, defaultExpanded = false, highlightedId, forceExpand }: ScorecardsSectionProps) {
+  const [cardResetKey, setCardResetKey] = useState(0)
+
+  const handleSectionExpandChange = (isExpanded: boolean) => {
+    if (!isExpanded) {
+      // Increment reset key to collapse all cards
+      setCardResetKey(prev => prev + 1)
+    }
+  }
+
   const grouped = useMemo(() => {
     const groups: Record<PerformanceBand, EmployeeScorecard[]> = {
       Star: [],
@@ -79,6 +89,7 @@ export function ScorecardsSection({ scorecards, defaultExpanded = false, highlig
       <EmployeeScorecardCard 
         key={`${sc.employee}-${sc.project}`} 
         scorecard={sc}
+        resetKey={cardResetKey}
         id={scId}
         isHighlighted={isHighlighted}
       />
@@ -91,25 +102,38 @@ export function ScorecardsSection({ scorecards, defaultExpanded = false, highlig
       summary={summary}
       defaultExpanded={defaultExpanded}
       forceExpand={forceExpand}
+      onExpandChange={handleSectionExpandChange}
     >
       {grouped.Star.length > 0 && (
         <div className="mb-4">
           <BandHeader band="Star" count={grouped.Star.length} />
-          {grouped.Star.map(renderScorecard)}
+          <VirtualizedList
+            items={grouped.Star}
+            maxHeight={340}
+            renderItem={(sc: EmployeeScorecard) => renderScorecard(sc)}
+          />
         </div>
       )}
 
       {grouped.Solid.length > 0 && (
         <div className="mb-4">
           <BandHeader band="Solid" count={grouped.Solid.length} />
-          {grouped.Solid.map(renderScorecard)}
+          <VirtualizedList
+            items={grouped.Solid}
+            maxHeight={340}
+            renderItem={(sc: EmployeeScorecard) => renderScorecard(sc)}
+          />
         </div>
       )}
 
       {grouped.Watch.length > 0 && (
         <div>
           <BandHeader band="Watch" count={grouped.Watch.length} />
-          {grouped.Watch.map(renderScorecard)}
+          <VirtualizedList
+            items={grouped.Watch}
+            maxHeight={340}
+            renderItem={(sc: EmployeeScorecard) => renderScorecard(sc)}
+          />
         </div>
       )}
     </CollapsibleSection>

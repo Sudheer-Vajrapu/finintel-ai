@@ -17,10 +17,10 @@ import type { TimeRange } from '@/shared/utils'
 // ── Time range selector ────────────────────────────────────────────────────
 const TIME_RANGES: { label: string; value: TimeRange }[] = [
   { label: 'All', value: 'all' },
-  { label: '1M',  value: '1m'  },
-  { label: '3M',  value: '3m'  },
-  { label: '6M',  value: '6m'  },
-  { label: '1Y',  value: '1y'  },
+  { label: 'Last 1 Month',  value: '1m'  },
+  { label: 'Last 3 Months',  value: '3m'  },
+  { label: 'Last 6 Months',  value: '6m'  },
+  { label: 'Last 1 Year',  value: '1y'  },
 ]
 
 function TimeRangeSelector({
@@ -112,22 +112,27 @@ export function DashboardPage() {
   const { success: toastSuccess, error: toastError } = useToast()
 
   // ── Data fetching hooks (enabled after successful ingest) ────────────────
-  // Determine which project filter to use for metrics based on active tab
-  const metricsProjectFilter = activeTab === 'employees' ? selectedEmployeeProject : null
-  
+  // Metrics API: syncs with time range filter (does not support project filtering)
   const { 
     data: metrics, 
     isLoading: metricsLoading, 
     isError: metricsError,
     refetch: refetchMetrics,
-  } = useMetrics(timeRange, { enabled: isIngested, project: metricsProjectFilter })
+  } = useMetrics(timeRange, { enabled: isIngested })
 
+  // Fetch all projects (for dropdowns in all tabs)
+  const { 
+    data: allProjects, 
+    isLoading: allProjectsLoading, 
+  } = useProjects(timeRange, { enabled: isIngested })
+
+  // Fetch filtered projects for Projects tab (API handles filtering)
   const { 
     data: projects, 
     isLoading: projectsLoading, 
     isError: projectsError,
     refetch: refetchProjects,
-  } = useProjects(timeRange, { enabled: isIngested && (activeTab === 'projects' || activeTab === 'employees' || activeTab === 'risks') })
+  } = useProjects(timeRange, { enabled: isIngested && activeTab === 'projects', project: selectedProjectsTabProject })
 
   const { 
     data: risksData, 
@@ -263,7 +268,16 @@ export function DashboardPage() {
             />
             <MetricCard 
               label="Gross margin" 
-              value={metrics.avgMarginPct != null ? formatPercent(metrics.avgMarginPct) : 'N/A'} 
+              value={metrics.avgMarginPct != null ? formatPercent(metrics.avgMarginPct) : 'N/A'}
+              stripColor={
+                metrics.avgMarginPct == null
+                  ? undefined
+                  : metrics.avgMarginPct > 40
+                    ? 'var(--success-mid)'
+                    : metrics.avgMarginPct >= 30
+                      ? 'var(--warning-mid)'
+                      : 'var(--danger-mid)'
+              }
             />
             <div className="col-span-2 sm:col-span-1">
               <MetricCard
@@ -280,19 +294,16 @@ export function DashboardPage() {
         <TabList>
           <TabTrigger id="projects">Projects</TabTrigger>
           <TabTrigger id="employees">Employees</TabTrigger>
-          <TabTrigger id="risks">Risks & recs</TabTrigger>
+          <TabTrigger id="risks">Risks and Recommendations</TabTrigger>
           <TabTrigger id="qa">Ask AI</TabTrigger>
         </TabList>
         <TabPanel id="projects">
           <ProjectsList 
-            projects={selectedProjectsTabProject 
-              ? projects?.filter(p => p.name === selectedProjectsTabProject)
-              : projects
-            } 
+            projects={projects} 
             isLoading={projectsLoading} 
             isError={projectsError}
             onRetry={() => refetchProjects()}
-            allProjects={projects ?? []}
+            allProjects={allProjects ?? []}
             selectedProject={selectedProjectsTabProject}
             onProjectChange={setSelectedProjectsTabProject}
           />
@@ -303,8 +314,8 @@ export function DashboardPage() {
             isLoading={employeesLoading}
             isError={employeesError}
             onRetry={() => refetchEmployees()}
-            projects={projects ?? []}
-            projectsLoading={projectsLoading}
+            projects={allProjects ?? []}
+            projectsLoading={allProjectsLoading}
             selectedProject={selectedEmployeeProject}
             onProjectChange={setSelectedEmployeeProject}
           />
@@ -315,8 +326,8 @@ export function DashboardPage() {
             isLoading={risksLoading} 
             isError={risksError}
             onRetry={() => refetchRisks()}
-            projects={projects ?? []}
-            projectsLoading={projectsLoading}
+            projects={allProjects ?? []}
+            projectsLoading={allProjectsLoading}
             selectedProject={selectedProject}
             onProjectChange={setSelectedProject}
           />

@@ -5,7 +5,8 @@ interface CollapsibleSectionProps {
   title: string
   summary?: ReactNode
   defaultExpanded?: boolean
-  forceExpand?: boolean
+  forceExpand?: number  // Increment to trigger expansion
+  onExpandChange?: (isExpanded: boolean) => void
   children: ReactNode
   className?: string
   id?: string
@@ -16,15 +17,16 @@ export function CollapsibleSection({
   summary,
   defaultExpanded = true,
   forceExpand,
+  onExpandChange,
   children,
   className = '',
   id,
 }: CollapsibleSectionProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
 
-  // Force expand when triggered from parent
+  // Force expand when triggered from parent (increment-based trigger)
   useEffect(() => {
-    if (forceExpand) {
+    if (forceExpand && forceExpand > 0) {
       setIsExpanded(true)
     }
   }, [forceExpand])
@@ -53,7 +55,11 @@ export function CollapsibleSection({
     >
       <button
         type="button"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={() => {
+          const newState = !isExpanded
+          setIsExpanded(newState)
+          onExpandChange?.(newState)
+        }}
         className={[
           'w-full flex items-center justify-between px-4 py-3 cursor-pointer',
           'transition-all duration-200 ease-out',
@@ -86,11 +92,13 @@ export function CollapsibleSection({
 
       <div
         ref={contentRef}
-        className="transition-all duration-300 ease-out overflow-hidden"
+        className="overflow-hidden"
         style={{
           maxHeight: isExpanded ? contentHeight ?? 5000 : 0,
           opacity: isExpanded ? 1 : 0,
           transform: isExpanded ? 'translateY(0)' : 'translateY(-8px)',
+          transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'max-height, opacity, transform',
         }}
       >
         <div className="px-4 pb-4">{children}</div>

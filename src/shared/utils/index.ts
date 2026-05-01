@@ -147,7 +147,7 @@ export function computeAnalysis(rows: CsvRow[]): AnalysisResult {
       cost: Math.round(p.cost),
       profit: Math.round(p.profit),
       margin: parseFloat(margin.toFixed(1)),
-      status: (margin >= 30 ? 'Healthy' : margin >= 15 ? 'Warning' : 'At Risk') as Project['status'],
+      status: (margin >= 30 ? 'Healthy' : margin >= 15 ? 'Average' : 'At Risk') as Project['status'],
       trend: { revenue_trend: 'Stable' as const, cost_trend: 'Stable' as const, profit_trend: 'Stable' as const, margin_trend: 'Stable' as const },
       employees: 0, // Not available from CSV parsing
       hours: Math.round(p.hours),
@@ -169,7 +169,7 @@ export function computeAnalysis(rows: CsvRow[]): AnalysisResult {
     // Map tag to contribution status
     const contributionStatus: Employee['contributionStatus'] = 
       tag === 'high_contributor' ? 'High' :
-      tag === 'optimal' ? 'Optimal' : 'Low'
+      tag === 'optimal' ? 'Average' : 'Low'
 
     const estimatedRevenue = Math.round(e.profit * 1.5)
     const grossMarginPct = estimatedRevenue > 0 ? (e.profit / estimatedRevenue) * 100 : 0
@@ -210,7 +210,7 @@ export function computeAnalysis(rows: CsvRow[]): AnalysisResult {
         impact: 'high',
         category: 'pricing',
       })
-    } else if (p.status === 'Warning') {
+    } else if (p.status === 'Average') {
       risks.push({
         id: `risk-${rIdx++}`,
         title: `${p.name}: margin approaching risk threshold (${p.margin}%)`,

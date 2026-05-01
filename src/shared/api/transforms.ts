@@ -77,7 +77,7 @@ export function buildRangeParam(range: string): string {
 function mapContributionToTag(status: ContributionStatus): EmployeeTag {
   const mapping: Record<ContributionStatus, EmployeeTag> = {
     'High': 'high_contributor',
-    'Optimal': 'optimal',
+    'Average': 'optimal',
     'Low': 'underutilized',
   }
   return mapping[status] ?? 'optimal'
@@ -106,9 +106,14 @@ export function transformEmployeesResponse(response: EmployeesApiResponse): Empl
     cost: data.total_cost ?? 0,
     grossMarginPct: data.gross_margin_pct ?? 0,
     utilizationPct: data.utilization_pct ?? 0,
+    attendancePct: data.attendance_pct,
+    vacationDays: data.vacation_days,
+    leaveDays: data.leave_days,
+    workingDays: data.working_days,
     projects: data.projects ?? [],
     tag: mapContributionToTag(data.contribution_status),
-    contributionStatus: data.contribution_status ?? 'Optimal',
+    contributionStatus: data.contribution_status ?? 'Average',
+    trends: data.trends,
   }))
   // Sort by revenue descending
   .sort((a, b) => b.revenue - a.revenue)
