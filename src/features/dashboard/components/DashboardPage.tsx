@@ -111,14 +111,21 @@ export function DashboardPage() {
   const { mutate: resetDataset, isPending: isResetting } = useResetDataset()
   const { success: toastSuccess, error: toastError } = useToast()
 
+  // ── Determine active project filter based on current tab ────────────────
+  const activeProjectFilter = 
+    activeTab === 'projects' ? selectedProjectsTabProject :
+    activeTab === 'employees' ? selectedEmployeeProject :
+    activeTab === 'risks' ? selectedProject :
+    null
+
   // ── Data fetching hooks (enabled after successful ingest) ────────────────
-  // Metrics API: syncs with time range filter (does not support project filtering)
+  // Metrics API: syncs with time range and project filter from active tab
   const { 
     data: metrics, 
     isLoading: metricsLoading, 
     isError: metricsError,
     refetch: refetchMetrics,
-  } = useMetrics(timeRange, { enabled: isIngested })
+  } = useMetrics(timeRange, { enabled: isIngested, project: activeProjectFilter })
 
   // Fetch all projects (for dropdowns in all tabs)
   const { 

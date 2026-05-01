@@ -5,25 +5,43 @@ import type { MetricsApiResponse, Metrics } from '../types'
 
 interface UseMetricsOptions {
   enabled?: boolean
+  project?: string | null
 }
 
 /**
  * Query hook for /metrics endpoint
- * Fetches and transforms metrics data based on time range
+ * Fetches and transforms metrics data based on time range and optional project filter
  * 
  * API Behavior:
  * - Default (All): /metrics (no query params)
  * - With range: /metrics?range=<value>
- * 
- * Note: This API does not support project filtering
+ * - With project: /metrics?project=<project_name>
+ * - Combined: /metrics?range=<value>&project=<project_name>
  */
 export function useMetrics(range: string, options: UseMetricsOptions = {}) {
-  const { enabled = true } = options
+  const { enabled = true, project = null } = options
 
   return useQuery<Metrics>({
-    queryKey: ['metrics', range],
+    queryKey: ['metrics', range, project],
     queryFn: async () => {
-      const queryString = buildRangeParam(range)
+      // Build query params array
+      const params: string[] = []
+      
+      // Add range param only if not "all"
+      const rangeParam = buildRangeParam(range)
+      if (rangeParam) {
+        // Extract just the range value from "?range=X"
+        params.push(rangeParam.replace('?', ''))
+      }
+      
+      // Add project param if specified
+      if (project) {
+        params.push(`project=${encodeURIComponent(project)}`)
+      }
+      
+      // Build final query string
+      const queryString = params.length > 0 ? `?${params.join('&')}` : ''
+      
       const response = await api.get<MetricsApiResponse>(`/metrics${queryString}`)
       return transformMetricsResponse(response)
     },
