@@ -5,7 +5,7 @@ import { ErrorBanner } from '@/shared/components/ui/EmptyState'
 import { ArrowRightIcon, InfoIcon, UploadIcon, FileTextIcon, TrashIcon, AlertTriangleIcon } from '@/shared/components/ui/Icons'
 import { useToast } from '@/shared/components/ui/Toast'
 import { useResetDataset } from '@/shared/api/hooks'
-import { isValidCSV, SAMPLE_CSV } from '@/shared/utils'
+import { isValidCSV } from '@/shared/utils'
 
 type InputMode = 'upload' | 'paste'
 
@@ -33,12 +33,6 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
     } else {
       setFiles([])
     }
-  }
-
-  const handleLoadSample = () => {
-    // Load sample triggers immediate analysis
-    toastSuccess('Loading sample data', '21 records ready to analyze')
-    onAnalyze(SAMPLE_CSV, [])
   }
 
   const handleResetData = () => {
@@ -231,17 +225,6 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
           </div>
         </div>
 
-        {/* Load sample data link — below the card */}
-        {/* <div className="text-center mt-5">
-          <button
-            onClick={handleLoadSample}
-            disabled={isLoading}
-            className="text-[13px] text-ink-secondary hover:text-accent transition-colors disabled:opacity-50"
-          >
-            Don't have data?{' '}
-            <span className="font-semibold text-accent hover:underline">Load sample CSV</span>
-          </button>
-        </div> */}
       </div>
     </div>
   )
