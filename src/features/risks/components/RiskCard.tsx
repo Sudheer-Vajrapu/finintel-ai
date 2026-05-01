@@ -1,8 +1,114 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { AlertTriangleIcon, CheckIcon, ChevronDownIcon } from '@/shared/components/ui/Icons'
 import { Badge } from '@/shared/components/ui/Badge'
-import type { RiskItem, RiskSeverity } from '@/shared/api/types'
+import type { RiskItem, RiskSeverity, RiskMetrics } from '@/shared/api/types'
 import { formatCurrency, formatPercent } from '@/shared/utils'
+
+// Metric display configuration
+interface MetricConfig {
+  label: string
+  format: (value: unknown) => string
+}
+
+const metricConfigs: Record<string, MetricConfig> = {
+  // Financial metrics
+  total_revenue: { label: 'Revenue', format: (v) => formatCurrency(v as number) },
+  total_cost: { label: 'Cost', format: (v) => formatCurrency(v as number) },
+  total_profit: { label: 'Profit', format: (v) => formatCurrency(v as number) },
+  revenue: { label: 'Revenue', format: (v) => formatCurrency(v as number) },
+  cost: { label: 'Cost', format: (v) => formatCurrency(v as number) },
+  profit: { label: 'Profit', format: (v) => formatCurrency(v as number) },
+  avg_margin_pct: { label: 'Margin', format: (v) => formatPercent(v as number) },
+  margin_pct: { label: 'Margin', format: (v) => formatPercent(v as number) },
+  target_margin: { label: 'Target', format: (v) => formatPercent(v as number) },
+  gap_pct: { label: 'Gap', format: (v) => formatPercent(v as number) },
+  billing_rate: { label: 'Billing Rate', format: (v) => formatCurrency(v as number) + '/h' },
+  cost_rate: { label: 'Cost Rate', format: (v) => formatCurrency(v as number) + '/h' },
+  rate_ratio: { label: 'Rate Ratio', format: (v) => `${(v as number).toFixed(2)}x` },
+  buffer_pct: { label: 'Buffer', format: (v) => formatPercent(v as number) },
+  profit_recovery: { label: 'Recovery', format: (v) => formatCurrency(v as number) },
+  employees: { label: 'Employees', format: (v) => String(v) },
+  
+  // Workforce metrics
+  consecutive_overload_months: { label: 'Overload Months', format: (v) => String(v) },
+  avg_utilisation_pct: { label: 'Utilisation', format: (v) => formatPercent(v as number) },
+  leave_pct_latest: { label: 'Leave %', format: (v) => formatPercent(v as number) },
+  billable_drop_pct: { label: 'Billable Drop', format: (v) => formatPercent(v as number) },
+  latest_month: { label: 'Month', format: (v) => String(v) },
+  estimated_replacement_cost: { label: 'Replacement Cost', format: (v) => formatCurrency(v as number) },
+  total_drop_pct: { label: 'Total Drop', format: (v) => formatPercent(v as number) },
+  leave_days: { label: 'Leave Days', format: (v) => String(v) },
+  working_days: { label: 'Working Days', format: (v) => String(v) },
+  leave_pct: { label: 'Leave %', format: (v) => formatPercent(v as number) },
+  month: { label: 'Month', format: (v) => String(v) },
+  estimated_revenue_impact: { label: 'Revenue Impact', format: (v) => formatCurrency(v as number) },
+  months_on_record: { label: 'Months', format: (v) => String(v) },
+  target_pct: { label: 'Target', format: (v) => formatPercent(v as number) },
+  
+  // Operational metrics
+  hours_gap: { label: 'Hours Gap', format: (v) => `${(v as number).toFixed(1)}h` },
+  estimated_rev_gap: { label: 'Revenue Gap', format: (v) => formatCurrency(v as number) },
+  consecutive_bench_months: { label: 'Bench Months', format: (v) => String(v) },
+  bench_cost: { label: 'Bench Cost', format: (v) => formatCurrency(v as number) },
+  consecutive_ceiling_months: { label: 'Ceiling Months', format: (v) => String(v) },
+  approved_hours_per_month: { label: 'Approved Hours', format: (v) => `${v}h/mo` },
+  months_covered: { label: 'Months', format: (v) => String(v) },
+  
+  // Project & Trend metrics
+  drop_pct: { label: 'Drop', format: (v) => formatPercent(v as number) },
+  employee_count: { label: 'Employees', format: (v) => String(v) },
+  cost_growth_pct: { label: 'Cost Growth', format: (v) => formatPercent(v as number) },
+  
+  // Legacy
+  performance_score: { label: 'Score', format: (v) => `${v}/100` },
+}
+
+// Keys to skip (arrays, objects, or handled separately)
+const skipKeys = new Set(['months', 'util_series', 'margin_series', 'cost_series', 'missing_fields', 'performance_band'])
+
+function renderMetrics(metrics: RiskMetrics): JSX.Element[] {
+  const elements: JSX.Element[] = []
+  
+  // Handle missing_fields specially
+  if (metrics.missing_fields && metrics.missing_fields.length > 0) {
+    elements.push(
+      <MetricPill 
+        key="missing_fields" 
+        label="Missing" 
+        value={metrics.missing_fields.join(', ')} 
+      />
+    )
+  }
+  
+  // Handle series data (show trend indicator)
+  if (metrics.months && metrics.months.length > 0) {
+    elements.push(
+      <MetricPill 
+        key="period" 
+        label="Period" 
+        value={`${metrics.months[0]} → ${metrics.months[metrics.months.length - 1]}`} 
+      />
+    )
+  }
+  
+  // Render all other metrics dynamically
+  for (const [key, value] of Object.entries(metrics)) {
+    if (skipKeys.has(key) || value === undefined || value === null) continue
+    
+    const config = metricConfigs[key]
+    if (config && typeof value !== 'object') {
+      elements.push(
+        <MetricPill 
+          key={key} 
+          label={config.label} 
+          value={config.format(value)} 
+        />
+      )
+    }
+  }
+  
+  return elements
+}
 
 const severityCfg: Record<RiskSeverity, {
   bg: string
@@ -70,12 +176,20 @@ function formatRiskType(type: string): string {
 interface RiskCardProps {
   risk: RiskItem
   defaultExpanded?: boolean
+  resetKey?: number
   onViewScorecard?: (employeeName: string) => void
   onViewRecommendation?: (riskType: string) => void
 }
 
-export function RiskCard({ risk, defaultExpanded = false, onViewScorecard, onViewRecommendation }: RiskCardProps) {
+export function RiskCard({ risk, defaultExpanded = false, resetKey, onViewScorecard, onViewRecommendation }: RiskCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+
+  // Collapse when resetKey changes (section collapsed)
+  useEffect(() => {
+    if (resetKey !== undefined) {
+      setIsExpanded(false)
+    }
+  }, [resetKey])
   const cfg = severityCfg[risk.severity]
   const isPositive = risk.severity === 'positive'
 
@@ -147,10 +261,14 @@ export function RiskCard({ risk, defaultExpanded = false, onViewScorecard, onVie
       </button>
 
       <div
-        className={[
-          'transition-all duration-300 ease-out overflow-hidden',
-          isExpanded ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0',
-        ].join(' ')}
+        className="overflow-hidden"
+        style={{
+          maxHeight: isExpanded ? 500 : 0,
+          opacity: isExpanded ? 1 : 0,
+          transform: isExpanded ? 'translateY(0)' : 'translateY(-8px)',
+          transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'max-height, opacity, transform',
+        }}
       >
         <div className="px-3 pb-3 sm:px-4 sm:pb-4 pt-0 ml-8 sm:ml-10 border-t border-[var(--border-subtle)] mt-2 pt-3">
           {risk.metrics && Object.keys(risk.metrics).length > 0 && (
@@ -159,67 +277,40 @@ export function RiskCard({ risk, defaultExpanded = false, onViewScorecard, onVie
                 Metrics
               </p>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                {risk.metrics.avg_margin_pct !== undefined && (
-                  <MetricPill label="Margin" value={formatPercent(risk.metrics.avg_margin_pct)} />
-                )}
-                {risk.metrics.target_margin !== undefined && (
-                  <MetricPill label="Target" value={formatPercent(risk.metrics.target_margin)} />
-                )}
-                {risk.metrics.billing_rate !== undefined && (
-                  <MetricPill label="Billing" value={formatCurrency(risk.metrics.billing_rate) + '/h'} />
-                )}
-                {risk.metrics.cost_rate !== undefined && (
-                  <MetricPill label="Cost" value={formatCurrency(risk.metrics.cost_rate) + '/h'} />
-                )}
-                {risk.metrics.buffer_pct !== undefined && (
-                  <MetricPill label="Buffer" value={formatPercent(risk.metrics.buffer_pct)} />
-                )}
-                {risk.metrics.avg_utilisation_pct !== undefined && (
-                  <MetricPill label="Utilisation" value={formatPercent(risk.metrics.avg_utilisation_pct)} />
-                )}
-                {risk.metrics.total_profit !== undefined && (
-                  <MetricPill label="Profit" value={formatCurrency(risk.metrics.total_profit)} />
-                )}
-                {risk.metrics.performance_score !== undefined && (
-                  <MetricPill label="Score" value={`${risk.metrics.performance_score}/100`} />
-                )}
+                {renderMetrics(risk.metrics)}
               </div>
-            </div>
-          )}
-
-          {risk.linked_employees && risk.linked_employees.length > 0 && (
-            <div className="mt-3 flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] text-ink-tertiary">Linked:</span>
-              {risk.linked_employees.map((emp) => (
-                <span
-                  key={emp}
-                  className="text-[11px] px-2 py-0.5 rounded-full bg-surface-sunken text-ink-secondary"
-                >
-                  {emp}
-                </span>
-              ))}
             </div>
           )}
 
           {/* View Links */}
           {(onViewScorecard || onViewRecommendation) && (
-            <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] flex items-center gap-4">
+            <div className="mt-3 pt-3 border-t border-[var(--border-subtle)] flex items-center gap-3">
               {onViewScorecard && risk.linked_employees && risk.linked_employees.length > 0 && (
                 <button
                   type="button"
                   onClick={() => onViewScorecard(risk.linked_employees[0])}
-                  className="text-[11px] font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1"
+                  className="text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 transition-all duration-150"
+                  style={{
+                    background: 'var(--accent)',
+                    color: 'var(--accent-text)',
+                    border: '1px solid var(--accent-border)',
+                  }}
                 >
-                  View Scorecard →
+                  View Scorecard
                 </button>
               )}
               {onViewRecommendation && risk.recommendation && (
                 <button
                   type="button"
                   onClick={() => onViewRecommendation(risk.type)}
-                  className="text-[11px] font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1"
+                  className="text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 transition-all duration-150"
+                  style={{
+                    background: 'var(--accent)',
+                    color: 'var(--accent-text)',
+                    border: '1px solid var(--accent-border)',
+                  }}
                 >
-                  View Recommendation →
+                  View Recommendation
                 </button>
               )}
             </div>

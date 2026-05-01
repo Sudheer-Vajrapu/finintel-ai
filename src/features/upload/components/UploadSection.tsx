@@ -118,14 +118,19 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
 
           {/* Segmented control tabs */}
           <div className="flex justify-center mb-6">
-            <div className="inline-flex p-1 bg-surface-raised rounded-xl border border-[var(--border-default)]">
+            <div className={[
+              'inline-flex p-1 bg-surface-raised rounded-xl border border-[var(--border-default)]',
+              isLoading ? 'opacity-60' : '',
+            ].join(' ')}>
               <button
                 onClick={() => handleModeChange('upload')}
+                disabled={isLoading}
                 className={[
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200',
                   mode === 'upload'
                     ? 'bg-accent text-accent-text shadow-sm dark:bg-surface-base dark:text-accent dark:border dark:border-accent-border'
                     : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-base/50',
+                  isLoading ? 'cursor-not-allowed' : '',
                 ].join(' ')}
               >
                 <UploadIcon size={14} strokeWidth={2} />
@@ -133,11 +138,13 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
               </button>
               <button
                 onClick={() => handleModeChange('paste')}
+                disabled={isLoading}
                 className={[
                   'flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all duration-200',
                   mode === 'paste'
                     ? 'bg-accent text-accent-text shadow-sm dark:bg-surface-base dark:text-accent dark:border dark:border-accent-border'
                     : 'text-ink-secondary hover:text-ink-primary hover:bg-surface-base/50',
+                  isLoading ? 'cursor-not-allowed' : '',
                 ].join(' ')}
               >
                 <FileTextIcon size={14} strokeWidth={2} />
@@ -157,7 +164,7 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
                 mode === 'upload' ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 absolute inset-0 pointer-events-none',
               ].join(' ')}
             >
-              <DropZone files={files} onFilesChange={setFiles} />
+              <DropZone files={files} onFilesChange={setFiles} disabled={isLoading} />
             </div>
             <div 
               className={[

@@ -74,10 +74,9 @@ export function AIInsightsBanner({ insights }: AIInsightsBannerProps) {
               AI Insights
             </span>
             <span
-              className="text-[10px] font-medium px-1.5 py-0.5 rounded-full"
+              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full text-accent-text"
               style={{
                 background: 'var(--accent)',
-                color: 'white',
               }}
             >
               Auto-generated
@@ -86,7 +85,7 @@ export function AIInsightsBanner({ insights }: AIInsightsBannerProps) {
 
           <ul className="space-y-1.5">
             {bullets.map((bullet, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-[12px] text-ink-secondary leading-relaxed">
+              <li key={idx} className="flex items-start gap-2 text-[12px] text-ink-primary leading-relaxed">
                 <span 
                   className="flex-shrink-0 w-1.5 h-1.5 rounded-full mt-1.5"
                   style={{ background: 'var(--accent)' }}

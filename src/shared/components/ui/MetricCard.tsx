@@ -14,6 +14,7 @@ interface MetricCardProps {
   value: string | number
   sub?: string
   trend?: 'up' | 'down' | 'neutral'
+  stripColor?: string
 }
 
 const trendConfig = {
@@ -22,7 +23,7 @@ const trendConfig = {
   neutral: { symbol: '→', bg: 'var(--surface-sunken)',  color: 'var(--ink-tertiary)' },
 }
 
-export function MetricCard({ label, value, sub, trend }: MetricCardProps) {
+export function MetricCard({ label, value, sub, trend, stripColor }: MetricCardProps) {
   const t = trend ? trendConfig[trend] : null
 
   return (
@@ -34,7 +35,7 @@ export function MetricCard({ label, value, sub, trend }: MetricCardProps) {
       }}
     >
       {/* Subtle top accent strip — uniform color for all cards */}
-      <div className="h-[3px] w-full" style={{ background: STRIP_COLOR }} />
+      <div className="h-[3px] w-full" style={{ background: stripColor ?? STRIP_COLOR }} />
 
       <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
         <p className="text-[10px] sm:text-[11px] font-bold text-ink-tertiary uppercase tracking-[0.7px] mb-1.5 sm:mb-2 leading-none">

@@ -90,19 +90,6 @@ export function RecommendationCard({ recommendation, id, isHighlighted }: Recomm
             )}
           </div>
 
-          {recommendation.linked_employees && recommendation.linked_employees.length > 0 && (
-            <div className="mt-2 flex items-center gap-2 flex-wrap">
-              <span className="text-[11px] text-ink-tertiary">Linked:</span>
-              {recommendation.linked_employees.map((emp) => (
-                <span
-                  key={emp}
-                  className="text-[11px] px-2 py-0.5 rounded-full bg-surface-sunken text-ink-secondary"
-                >
-                  {emp}
-                </span>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     </div>

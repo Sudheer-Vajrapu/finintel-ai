@@ -2,9 +2,9 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Badge } from '@/shared/components/ui/Badge'
 import { CardSkeleton } from '@/shared/components/ui/Loader'
 import { EmptyState, ErrorState } from '@/shared/components/ui/EmptyState'
-import { ChevronDownIcon, XIcon } from '@/shared/components/ui/Icons'
+import { ChevronDownIcon, XIcon, TrendingUpIcon, TrendingDownIcon, MinusIcon } from '@/shared/components/ui/Icons'
 import { formatCurrency, formatPercent } from '@/shared/utils'
-import type { Employee, EmployeeTag, Project } from '@/shared/api/types'
+import type { Employee, EmployeeTag, Project, TrendValue } from '@/shared/api/types'
 
 // ── Avatar Colors ────────────────────────────────────────────────────────────
 const AVATARS = [
@@ -21,7 +21,7 @@ const tagConfig: Record<EmployeeTag, {
   label: string
   variant: 'green' | 'red' | 'amber' | 'blue' | 'indigo' | 'gray'
 }> = {
-  optimal:          { label: 'Optimal',     variant: 'amber' },
+  optimal:          { label: 'Average',     variant: 'amber' },
   high_contributor: { label: 'High',        variant: 'green'  },
   underutilized:    { label: 'Low',         variant: 'red'  },
   overloaded:       { label: 'Overloaded',  variant: 'red'    },
@@ -70,9 +70,17 @@ const STATUS_FILTER_STYLES: Record<StatusFilter, {
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: 'all', label: 'All' },
   { value: 'high_contributor', label: 'High' },
-  { value: 'optimal', label: 'Optimal' },
+  { value: 'optimal', label: 'Average' },
   { value: 'underutilized', label: 'Low' },
 ]
+
+// ── Trend Arrow ───────────────────────────────────────────────────────────────
+function TrendArrow({ value }: { value?: TrendValue }) {
+  if (!value) return null
+  if (value === 'Up') return <TrendingUpIcon size={12} strokeWidth={2.5} className="text-green-600" />
+  if (value === 'Down') return <TrendingDownIcon size={12} strokeWidth={2.5} className="text-red-600" />
+  return <MinusIcon size={12} strokeWidth={2.5} className="text-ink-tertiary" />
+}
 
 // ── Avatar Component ─────────────────────────────────────────────────────────
 function Avatar({ name, index }: { name: string; index: number }) {
@@ -90,18 +98,21 @@ function Avatar({ name, index }: { name: string; index: number }) {
 
 // ── Metrics Grid ─────────────────────────────────────────────────────────────
 function MetricsGrid({ employee }: { employee: Employee }) {
+  const { trends } = employee
   const metrics = [
-    { label: 'Total Revenue', value: employee.revenue != null ? formatCurrency(employee.revenue) : 'N/A' },
-    { label: 'Total Profit', value: employee.profit != null ? formatCurrency(employee.profit) : 'N/A' },
-    { label: 'Total Cost', value: employee.cost != null ? formatCurrency(employee.cost) : 'N/A' },
-    { label: 'Gross Margin', value: employee.grossMarginPct != null ? formatPercent(employee.grossMarginPct) : 'N/A' },
+    { label: 'Revenue', value: employee.revenue != null ? formatCurrency(employee.revenue) : 'N/A', trend: trends?.revenue_trend },
+    { label: 'Profit', value: employee.profit != null ? formatCurrency(employee.profit) : 'N/A', trend: trends?.profit_trend },
+    { label: 'Cost', value: employee.cost != null ? formatCurrency(employee.cost) : 'N/A', trend: trends?.cost_trend },
+    { label: 'Gross Margin', value: employee.grossMarginPct != null ? formatPercent(employee.grossMarginPct) : 'N/A', trend: trends?.margin_trend },
   ]
   return (
     <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-      {metrics.map(({ label, value }) => (
+      {metrics.map(({ label, value, trend }) => (
         <div key={label}>
           <p className="text-[10px] font-medium text-ink-tertiary uppercase tracking-wide">{label}</p>
-          <p className="text-[14px] font-bold text-ink-primary mt-0.5">{value}</p>
+          <p className="text-[14px] font-bold flex items-center gap-1.5 mt-0.5 text-ink-primary">
+            {value} <TrendArrow value={trend} />
+          </p>
         </div>
       ))}
     </div>
@@ -261,7 +272,7 @@ function ProjectFilterDropdown({
             'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
             'border transition-all duration-150 cursor-pointer',
             selectedProject
-              ? 'bg-accent/10 text-accent border-accent/30 dark:bg-accent/20 dark:border-accent/40'
+              ? 'bg-accent/10 text-ink-primary border-accent/30 dark:bg-accent/20 dark:border-accent/40'
               : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
           ].join(' ')}
         >
@@ -374,7 +385,7 @@ function EmployeeCard({ employee, index, isExpanded, onToggle }: {
 
   return (
     <article
-      className="bg-surface-base rounded-[14px] animate-fade-up transition-shadow hover:shadow-md overflow-hidden"
+      className="card-expandable bg-surface-base rounded-[14px] animate-fade-up hover:shadow-md overflow-hidden"
       style={{ boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)' }}
     >
       {/* Card Header - Clickable */}

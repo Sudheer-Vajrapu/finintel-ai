@@ -35,9 +35,10 @@ function truncateMiddle(str: string, maxLen: number): string {
 interface DropZoneProps {
   files: File[]
   onFilesChange: (files: File[]) => void
+  disabled?: boolean
 }
 
-export function DropZone({ files, onFilesChange }: DropZoneProps) {
+export function DropZone({ files, onFilesChange, disabled = false }: DropZoneProps) {
   const [isDragging, setIsDragging] = useState(false)
   const [isClicked, setIsClicked] = useState(false)
   const [blinking, setBlinking] = useState<Set<string>>(new Set())
@@ -45,6 +46,7 @@ export function DropZone({ files, onFilesChange }: DropZoneProps) {
   const { warning, success } = useToast()
 
   const handleClick = () => {
+    if (disabled) return
     setIsClicked(true)
     setTimeout(() => setIsClicked(false), 300)
     inputRef.current?.click()
@@ -56,6 +58,7 @@ export function DropZone({ files, onFilesChange }: DropZoneProps) {
   }
 
   const processFiles = (incoming: File[]) => {
+    if (disabled) return
     const rejected: string[] = []
     const dupes: string[] = []
     const toAdd: File[] = []
@@ -90,15 +93,17 @@ export function DropZone({ files, onFilesChange }: DropZoneProps) {
       {/* Drop zone — fixed height to match textarea (280px) */}
       <div
         className={[
-          'relative rounded-xl p-8 text-center cursor-pointer h-[280px] flex flex-col items-center justify-center',
+          'relative rounded-xl p-8 text-center h-[280px] flex flex-col items-center justify-center',
           'bg-surface-base transition-all duration-200 select-none',
-          isDragging
-            ? 'border-2 border-solid border-accent bg-accent-light scale-[1.02] shadow-md'
-            : 'border-[1.5px] border-dashed border-[var(--border-strong)] hover:border-accent hover:bg-surface-raised',
+          disabled
+            ? 'cursor-not-allowed opacity-60 border-[1.5px] border-dashed border-[var(--border-default)]'
+            : isDragging
+              ? 'cursor-pointer border-2 border-solid border-accent bg-accent-light scale-[1.02] shadow-md'
+              : 'cursor-pointer border-[1.5px] border-dashed border-[var(--border-strong)] hover:border-accent hover:bg-surface-raised',
         ].join(' ')}
-        onDragOver={e => { e.preventDefault(); setIsDragging(true) }}
+        onDragOver={e => { e.preventDefault(); if (!disabled) setIsDragging(true) }}
         onDragLeave={() => setIsDragging(false)}
-        onDrop={e => { e.preventDefault(); setIsDragging(false); processFiles(Array.from(e.dataTransfer.files)) }}
+        onDrop={e => { e.preventDefault(); setIsDragging(false); if (!disabled) processFiles(Array.from(e.dataTransfer.files)) }}
         onClick={handleClick}
         onKeyDown={e => e.key === 'Enter' && handleClick()}
         role="button"
@@ -176,8 +181,14 @@ export function DropZone({ files, onFilesChange }: DropZoneProps) {
                 
                 {/* Delete button */}
                 <button
-                  onClick={e => { e.stopPropagation(); onFilesChange(files.filter(x => x.name !== f.name)) }}
-                  className="flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center text-ink-tertiary hover:text-danger-mid hover:bg-danger-bg transition-all"
+                  onClick={e => { e.stopPropagation(); if (!disabled) onFilesChange(files.filter(x => x.name !== f.name)) }}
+                  disabled={disabled}
+                  className={[
+                    'flex-shrink-0 w-7 h-7 rounded-lg flex items-center justify-center transition-all',
+                    disabled
+                      ? 'text-ink-tertiary opacity-40 cursor-not-allowed'
+                      : 'text-ink-tertiary hover:text-danger-mid hover:bg-danger-bg',
+                  ].join(' ')}
                   aria-label={`Remove ${f.name}`}
                 >
                   <TrashIcon size={14} strokeWidth={1.8} />
@@ -192,8 +203,14 @@ export function DropZone({ files, onFilesChange }: DropZoneProps) {
               {files.length} file{files.length !== 1 ? 's' : ''} ready
             </span>
             <button
-              onClick={() => onFilesChange([])}
-              className="text-[11px] font-medium text-ink-tertiary hover:text-danger-mid transition-colors"
+              onClick={() => { if (!disabled) onFilesChange([]) }}
+              disabled={disabled}
+              className={[
+                'text-[11px] font-medium transition-colors',
+                disabled
+                  ? 'text-ink-tertiary opacity-40 cursor-not-allowed'
+                  : 'text-ink-tertiary hover:text-danger-mid',
+              ].join(' ')}
             >
               Clear all
             </button>

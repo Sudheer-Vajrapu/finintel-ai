@@ -25,7 +25,7 @@ function StatusBadge({ status }: { status?: ProjectStatus }) {
   if (!status) return null
   if (status === 'Healthy') return <Badge variant="green">Healthy</Badge>
   if (status === 'At Risk') return <Badge variant="red">At Risk</Badge>
-  return <Badge variant="amber">Optimal</Badge>
+  return <Badge variant="amber">Average</Badge>
 }
 
 // ── Trend Arrow ───────────────────────────────────────────────────────────────
@@ -64,35 +64,24 @@ function ProjectCard({ project, isExpanded, onToggle }: {
   isExpanded: boolean
   onToggle: () => void
 }) {
-  const isHealthy = project.status === 'Healthy'
-  const isRisk = project.status === 'At Risk'
-  
-  // Status-based styling (matches badge colors)
-  const borderAccent = isHealthy ? '#16A34A' : isRisk ? '#DC2626' : '#D97706'
-  const cardBg = isHealthy ? 'var(--success-bg)' : isRisk ? 'var(--danger-bg)' : 'var(--warning-bg)'
-  const cardBorder = isHealthy ? 'rgba(22,163,74,0.15)' : isRisk ? 'rgba(220,38,38,0.15)' : 'rgba(217,119,6,0.15)'
-
   // Header summary values
   const revenueDisplay = project.revenue != null ? formatCurrency(project.revenue) : 'N/A'
   const marginDisplay = project.margin != null ? formatPercent(project.margin) : 'N/A'
 
   return (
-    <div
-      onClick={onToggle}
-      role="button"
-      tabIndex={0}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
-      aria-expanded={isExpanded}
-      className="rounded-[14px] animate-fade-up transition-all duration-300 hover:shadow-md overflow-hidden cursor-pointer"
-      style={{
-        background: cardBg,
-        boxShadow: 'var(--shadow-sm)',
-        border: `1px solid ${cardBorder}`,
-        borderLeft: `4px solid ${borderAccent}`,
-      }}
+    <article
+      className="card-expandable bg-surface-base rounded-[14px] animate-fade-up hover:shadow-md overflow-hidden"
+      style={{ boxShadow: 'var(--shadow-sm)', border: '1px solid var(--border-subtle)' }}
     >
-      {/* Card header - all items vertically centered */}
-      <div className="px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-3 min-h-[48px]">
+      {/* Card Header - Clickable */}
+      <div
+        onClick={onToggle}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(); } }}
+        role="button"
+        tabIndex={0}
+        aria-expanded={isExpanded}
+        aria-label={`${project.name}, ${project.status ?? 'Unknown'} status. ${isExpanded ? 'Collapse' : 'Expand'} details.`}
+        className="w-full text-left px-3 py-2.5 sm:px-4 sm:py-3 flex items-center gap-3 cursor-pointer">
         {/* Project name */}
         <h3 className="text-[15px] sm:text-[15px] font-semibold tracking-tight text-ink-primary truncate flex-1 min-w-0 leading-[1]">
           {project.name}
@@ -137,12 +126,12 @@ function ProjectCard({ project, isExpanded, onToggle }: {
           </div>
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 
 // ── Status Filter ─────────────────────────────────────────────────────────────
-type StatusFilter = 'all' | 'Healthy' | 'At Risk' | 'Optimal'
+type StatusFilter = 'all' | 'Healthy' | 'At Risk' | 'Average'
 
 // Theme-aware filter styles using CSS variables (matches card backgrounds)
 const STATUS_FILTER_STYLES: Record<StatusFilter, { 
@@ -173,7 +162,7 @@ const STATUS_FILTER_STYLES: Record<StatusFilter, {
     countBg: 'var(--danger-mid)',
     countText: 'white',
   },
-  Optimal: {
+  Average: {
     activeBg: 'var(--warning-bg)',
     activeText: 'var(--warning-text)',
     activeBorder: 'var(--warning-border)',
@@ -182,7 +171,7 @@ const STATUS_FILTER_STYLES: Record<StatusFilter, {
   },
 }
 
-const STATUS_FILTERS: StatusFilter[] = ['all', 'Healthy', 'At Risk', 'Optimal']
+const STATUS_FILTERS: StatusFilter[] = ['all', 'Healthy', 'At Risk', 'Average']
 
 // ── Project Filter Dropdown ──────────────────────────────────────────────────
 function ProjectFilterDropdown({
@@ -237,7 +226,7 @@ function ProjectFilterDropdown({
             'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
             'border transition-all duration-150 cursor-pointer',
             selectedProject
-              ? 'bg-accent/10 text-accent border-accent/30 dark:bg-accent/20 dark:border-accent/40'
+              ? 'bg-accent/10 text-ink-primary border-accent/30 dark:bg-accent/20 dark:border-accent/40'
               : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
           ].join(' ')}
         >
@@ -432,13 +421,12 @@ export function ProjectsList({
     all: projects?.length ?? 0,
     Healthy: projects?.filter(p => p.status === 'Healthy').length ?? 0,
     'At Risk': projects?.filter(p => p.status === 'At Risk').length ?? 0,
-    Optimal: projects?.filter(p => p.status !== 'Healthy' && p.status !== 'At Risk').length ?? 0,
+    Average: projects?.filter(p => p.status === 'Average').length ?? 0,
   }), [projects])
 
   // Filter projects based on selected status
   const filteredProjects = projects?.filter(p => {
     if (statusFilter === 'all') return true
-    if (statusFilter === 'Optimal') return p.status !== 'Healthy' && p.status !== 'At Risk'
     return p.status === statusFilter
   })
 

@@ -61,7 +61,7 @@ export interface Metrics {
 }
 
 // ─── Projects ─────────────────────────────────────────────────────────────────
-export type ProjectStatus = 'Healthy' | 'At Risk' | 'Warning'
+export type ProjectStatus = 'Healthy' | 'At Risk' | 'Average'
 export type TrendValue = 'Up' | 'Down' | 'Stable'
 
 export interface ProjectTrend {
@@ -103,7 +103,14 @@ export interface Project {
 
 // ─── Employees ────────────────────────────────────────────────────────────────
 export type EmployeeTag = 'optimal' | 'high_contributor' | 'underutilized' | 'overloaded'
-export type ContributionStatus = 'High' | 'Optimal' | 'Low'
+export type ContributionStatus = 'High' | 'Average' | 'Low'
+
+export interface EmployeeTrend {
+  revenue_trend: TrendValue
+  cost_trend: TrendValue
+  profit_trend: TrendValue
+  margin_trend: TrendValue
+}
 
 export interface EmployeeProject {
   project_name: string
@@ -124,8 +131,13 @@ export interface EmployeesApiResponse {
     total_cost: number
     gross_margin_pct: number
     utilization_pct: number
+    attendance_pct?: number
+    vacation_days?: number
+    leave_days?: number
+    working_days?: number
     projects: EmployeeProject[]
     contribution_status: ContributionStatus
+    trends?: EmployeeTrend
   }>
 }
 
@@ -139,9 +151,14 @@ export interface Employee {
   cost: number
   grossMarginPct: number
   utilizationPct: number
+  attendancePct?: number
+  vacationDays?: number
+  leaveDays?: number
+  workingDays?: number
   projects: EmployeeProject[]
   tag: EmployeeTag
   contributionStatus: ContributionStatus
+  trends?: EmployeeTrend
 }
 
 // ─── Risks & Recommendations ──────────────────────────────────────────────────
@@ -151,15 +168,62 @@ export type RiskPriority = 'IMMEDIATE' | 'SHORT_TERM' | 'LONG_TERM'
 export type PerformanceBand = 'Star' | 'Solid' | 'Watch'
 
 export interface RiskMetrics {
+  // Financial metrics (employee & project level)
+  total_revenue?: number
+  total_cost?: number
+  total_profit?: number
   avg_margin_pct?: number
+  margin_pct?: number
   target_margin?: number
   gap_pct?: number
   billing_rate?: number
   cost_rate?: number
   rate_ratio?: number
   buffer_pct?: number
+  profit_recovery?: number
+  missing_fields?: string[]
+  revenue?: number
+  cost?: number
+  profit?: number
+  employees?: number
+  
+  // Workforce metrics
+  consecutive_overload_months?: number
   avg_utilisation_pct?: number
-  total_profit?: number
+  months?: string[]
+  leave_pct_latest?: number
+  billable_drop_pct?: number
+  latest_month?: string
+  estimated_replacement_cost?: number
+  util_series?: number[]
+  total_drop_pct?: number
+  leave_days?: number
+  working_days?: number
+  leave_pct?: number
+  month?: string
+  estimated_revenue_impact?: number
+  months_on_record?: number
+  target_pct?: number
+  
+  // Operational metrics
+  hours_gap?: number
+  estimated_rev_gap?: number
+  consecutive_bench_months?: number
+  bench_cost?: number
+  consecutive_ceiling_months?: number
+  approved_hours_per_month?: number
+  months_covered?: number
+  
+  // Project-level metrics
+  margin_series?: number[]
+  drop_pct?: number
+  employee_count?: number
+  
+  // Trend metrics
+  cost_series?: number[]
+  cost_growth_pct?: number
+  
+  // Legacy/general
   performance_score?: number
   performance_band?: PerformanceBand
 }

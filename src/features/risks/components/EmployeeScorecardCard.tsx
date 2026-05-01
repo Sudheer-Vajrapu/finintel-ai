@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronDownIcon, BriefcaseIcon } from '@/shared/components/ui/Icons'
 import { Badge } from '@/shared/components/ui/Badge'
 import { ProgressBar } from '@/shared/components/ui/ProgressBar'
@@ -38,12 +38,20 @@ const bandCfg: Record<PerformanceBand, {
 interface EmployeeScorecardCardProps {
   scorecard: EmployeeScorecard
   defaultExpanded?: boolean
+  resetKey?: number
   id?: string
   isHighlighted?: boolean
 }
 
-export function EmployeeScorecardCard({ scorecard, defaultExpanded = false, id, isHighlighted }: EmployeeScorecardCardProps) {
+export function EmployeeScorecardCard({ scorecard, defaultExpanded = false, resetKey, id, isHighlighted }: EmployeeScorecardCardProps) {
   const [isExpanded, setIsExpanded] = useState(defaultExpanded)
+
+  // Collapse when resetKey changes (section collapsed)
+  useEffect(() => {
+    if (resetKey !== undefined) {
+      setIsExpanded(false)
+    }
+  }, [resetKey])
   const band = scorecard.performance.band
   const cfg = bandCfg[band]
   const score = scorecard.performance.score
@@ -107,10 +115,14 @@ export function EmployeeScorecardCard({ scorecard, defaultExpanded = false, id, 
       </button>
 
       <div
-        className={[
-          'transition-all duration-300 ease-out overflow-hidden',
-          isExpanded ? 'max-h-[400px] opacity-100' : 'max-h-0 opacity-0',
-        ].join(' ')}
+        className="overflow-hidden"
+        style={{
+          maxHeight: isExpanded ? 400 : 0,
+          opacity: isExpanded ? 1 : 0,
+          transform: isExpanded ? 'translateY(0)' : 'translateY(-8px)',
+          transition: 'max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          willChange: 'max-height, opacity, transform',
+        }}
       >
         <div className="px-3 pb-3 sm:px-4 sm:pb-4 border-t border-[var(--border-subtle)] mt-1 pt-3">
           <div className="grid grid-cols-3 gap-3 mb-4">
