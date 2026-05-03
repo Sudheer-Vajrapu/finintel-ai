@@ -23,9 +23,9 @@ export function ScorecardsSection({ scorecards, defaultExpanded = false, highlig
 
   const grouped = useMemo(() => {
     const groups: Record<PerformanceBand, EmployeeScorecard[]> = {
-      Star: [],
-      Solid: [],
-      Watch: [],
+      High: [],
+      Average: [],
+      Low: [],
     }
 
     scorecards.forEach((sc) => {
@@ -39,27 +39,27 @@ export function ScorecardsSection({ scorecards, defaultExpanded = false, highlig
   }, [scorecards])
 
   const bandCounts = {
-    Star: grouped.Star.length,
-    Solid: grouped.Solid.length,
-    Watch: grouped.Watch.length,
+    High: grouped.High.length,
+    Average: grouped.Average.length,
+    Low: grouped.Low.length,
   }
 
   const summary = (
     <span className="flex items-center gap-2 text-[12px]">
       <span className="font-medium">{scorecards.length} Employees</span>
-      {bandCounts.Star > 0 && (
+      {bandCounts.High > 0 && (
         <span className="px-1.5 py-0.5 rounded-full bg-success-bg text-success-text text-[10px] font-medium">
-          {bandCounts.Star} Star
+          {bandCounts.High} High
         </span>
       )}
-      {bandCounts.Solid > 0 && (
-        <span className="px-1.5 py-0.5 rounded-full bg-info-bg text-info-text text-[10px] font-medium">
-          {bandCounts.Solid} Solid
-        </span>
-      )}
-      {bandCounts.Watch > 0 && (
+      {bandCounts.Average > 0 && (
         <span className="px-1.5 py-0.5 rounded-full bg-warning-bg text-warning-text text-[10px] font-medium">
-          {bandCounts.Watch} Watch
+          {bandCounts.Average} Average
+        </span>
+      )}
+      {bandCounts.Low > 0 && (
+        <span className="px-1.5 py-0.5 rounded-full bg-danger-bg text-danger-text text-[10px] font-medium">
+          {bandCounts.Low} Low
         </span>
       )}
     </span>
@@ -104,33 +104,33 @@ export function ScorecardsSection({ scorecards, defaultExpanded = false, highlig
       forceExpand={forceExpand}
       onExpandChange={handleSectionExpandChange}
     >
-      {grouped.Star.length > 0 && (
+      {grouped.High.length > 0 && (
         <div className="mb-4">
-          <BandHeader band="Star" count={grouped.Star.length} />
+          <BandHeader band="High" count={grouped.High.length} />
           <VirtualizedList
-            items={grouped.Star}
+            items={grouped.High}
             maxHeight={340}
             renderItem={(sc: EmployeeScorecard) => renderScorecard(sc)}
           />
         </div>
       )}
 
-      {grouped.Solid.length > 0 && (
+      {grouped.Average.length > 0 && (
         <div className="mb-4">
-          <BandHeader band="Solid" count={grouped.Solid.length} />
+          <BandHeader band="Average" count={grouped.Average.length} />
           <VirtualizedList
-            items={grouped.Solid}
+            items={grouped.Average}
             maxHeight={340}
             renderItem={(sc: EmployeeScorecard) => renderScorecard(sc)}
           />
         </div>
       )}
 
-      {grouped.Watch.length > 0 && (
+      {grouped.Low.length > 0 && (
         <div>
-          <BandHeader band="Watch" count={grouped.Watch.length} />
+          <BandHeader band="Low" count={grouped.Low.length} />
           <VirtualizedList
-            items={grouped.Watch}
+            items={grouped.Low}
             maxHeight={340}
             renderItem={(sc: EmployeeScorecard) => renderScorecard(sc)}
           />
@@ -142,15 +142,15 @@ export function ScorecardsSection({ scorecards, defaultExpanded = false, highlig
 
 function BandHeader({ band, count }: { band: PerformanceBand; count: number }) {
   const colors: Record<PerformanceBand, string> = {
-    Star: 'var(--success-text)',
-    Solid: 'var(--info-text)',
-    Watch: 'var(--warning-text)',
+    High: 'var(--success-text)',
+    Average: 'var(--warning-text)',
+    Low: 'var(--danger-text)',
   }
 
   return (
     <p className="text-[11px] font-bold uppercase tracking-[0.7px] mb-2 flex items-center gap-2" style={{ color: colors[band] }}>
       <span className="flex-1 h-px" style={{ background: colors[band], opacity: 0.3 }} />
-      {band} Performers ({count})
+      {band} Margin Employees ({count})
       <span className="flex-1 h-px" style={{ background: colors[band], opacity: 0.3 }} />
     </p>
   )

@@ -165,7 +165,7 @@ export interface Employee {
 export type RiskSeverity = 'critical' | 'high' | 'medium' | 'low' | 'positive'
 export type RiskCategory = 'financial' | 'workforce' | 'operational' | 'general'
 export type RiskPriority = 'IMMEDIATE' | 'SHORT_TERM' | 'LONG_TERM'
-export type PerformanceBand = 'Star' | 'Solid' | 'Watch'
+export type PerformanceBand = 'High' | 'Average' | 'Low'
 
 export interface RiskMetrics {
   // Financial metrics (employee & project level)
@@ -278,6 +278,7 @@ export interface EmployeeScorecard {
   latest_month: string
   performance: EmployeeScorecardPerformance
   total_revenue: number
+  total_cost: number
   total_profit: number
   avg_utilisation: number
 }
