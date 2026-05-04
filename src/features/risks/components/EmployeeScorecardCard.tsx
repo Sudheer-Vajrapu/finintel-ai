@@ -9,29 +9,29 @@ const bandCfg: Record<PerformanceBand, {
   bg: string
   border: string
   text: string
-  badgeVariant: 'green' | 'blue' | 'amber'
-  progressVariant: 'green' | 'blue' | 'amber'
+  badgeVariant: 'green' | 'amber' | 'red'
+  progressVariant: 'green' | 'amber' | 'red'
 }> = {
-  Star: {
+  High: {
     bg: 'var(--success-bg)',
     border: '2px solid var(--success-border)',
     text: 'var(--success-text)',
     badgeVariant: 'green',
     progressVariant: 'green',
   },
-  Solid: {
-    bg: 'var(--info-bg)',
-    border: '2px solid var(--info-border)',
-    text: 'var(--info-text)',
-    badgeVariant: 'blue',
-    progressVariant: 'blue',
-  },
-  Watch: {
+  Average: {
     bg: 'var(--warning-bg)',
     border: '2px solid var(--warning-border)',
     text: 'var(--warning-text)',
     badgeVariant: 'amber',
     progressVariant: 'amber',
+  },
+  Low: {
+    bg: 'var(--danger-bg)',
+    border: '2px solid var(--danger-border)',
+    text: 'var(--danger-text)',
+    badgeVariant: 'red',
+    progressVariant: 'red',
   },
 }
 
@@ -146,8 +146,9 @@ export function EmployeeScorecardCard({ scorecard, defaultExpanded = false, rese
             />
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-5 gap-2">
             <MetricBox label="Revenue" value={formatCurrency(scorecard.total_revenue)} />
+            <MetricBox label="Cost" value={formatCurrency(scorecard.total_cost)} />
             <MetricBox label="Profit" value={formatCurrency(scorecard.total_profit)} />
             <MetricBox label="Utilisation" value={formatPercent(scorecard.avg_utilisation)} />
             <MetricBox label="Months" value={`${scorecard.months_covered}`} />
@@ -162,7 +163,7 @@ function ScoreBreakdown({ label, score, value, variant }: {
   label: string
   score: number
   value: string
-  variant: 'green' | 'blue' | 'amber'
+  variant: 'green' | 'amber' | 'red'
 }) {
   return (
     <div>
