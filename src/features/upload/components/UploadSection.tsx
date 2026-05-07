@@ -107,6 +107,9 @@ export function UploadSection({ onAnalyze, isLoading = false }: UploadSectionPro
               <p className="text-[11px] text-ink-secondary font-mono truncate">
                 employee, project, month, year, hours, billing_rate, cost_rate
               </p>
+              <p className="text-[11px] font-mono text-ink-secondary mt-1">
+                <strong>*</strong> upload the cost_rate on hourly basis
+              </p>
             </div>
           </div>
 
