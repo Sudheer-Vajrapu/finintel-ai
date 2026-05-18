@@ -100,6 +100,7 @@ export function transformEmployeesResponse(response: EmployeesApiResponse): Empl
   return employees.map((data) => ({
     id: generateEmployeeId(data.employee_name),
     name: data.employee_name,
+    designation: data.designation,
     hours: data.total_hours ?? 0,
     revenue: data.total_revenue ?? 0,
     profit: data.total_profit ?? 0,

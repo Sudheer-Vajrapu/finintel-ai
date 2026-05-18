@@ -125,6 +125,7 @@ export interface EmployeesApiResponse {
   count: number
   employees: Array<{
     employee_name: string
+    designation?: string
     total_hours: number
     total_revenue: number
     total_profit: number
@@ -145,6 +146,7 @@ export interface EmployeesApiResponse {
 export interface Employee {
   id: string
   name: string
+  designation?: string
   hours: number
   revenue: number
   profit: number

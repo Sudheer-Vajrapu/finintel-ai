@@ -404,6 +404,15 @@ function EmployeeCard({ employee, index, isExpanded, onToggle }: {
           <h3 className="text-[15px] font-semibold text-ink-primary tracking-tight truncate">
             {employee.name}
           </h3>
+          {/* Designation - only visible when expanded */}
+          <p 
+            className={[
+              'text-[12px] text-ink-tertiary truncate transition-all duration-200',
+              isExpanded ? 'opacity-100 max-h-5 mt-0.5' : 'opacity-0 max-h-0 overflow-hidden',
+            ].join(' ')}
+          >
+            {employee.designation ?? 'N/A'}
+          </p>
         </div>
         
         {/* Summary metrics - hidden when expanded */}
