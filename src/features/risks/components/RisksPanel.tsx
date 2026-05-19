@@ -284,11 +284,32 @@ export function RisksPanel({
     }
   }, [scrollToAndHighlight, data?.employeeScorecards])
 
-  const handleViewRecommendation = useCallback((riskType: string) => {
-    // Find the first recommendation matching this risk type
-    const recIndex = data?.recommendations.findIndex(
-      rec => rec.related_risk_type.toLowerCase() === riskType.toLowerCase()
-    ) ?? -1
+  const handleViewRecommendation = useCallback((riskId: string) => {
+    // Parse the riskId: "type|entity|project"
+    const [riskType, entity] = riskId.split('|')
+    
+    // Clear any previous highlight first
+    setHighlightedId(null)
+    
+    // Find the matching recommendation using type + linked_employees
+    const recIndex = data?.recommendations.findIndex(rec => {
+      // Must match risk type
+      if (rec.related_risk_type.toLowerCase() !== riskType.toLowerCase()) {
+        return false
+      }
+      
+      // If recommendation has linked employees, match against entity
+      if (rec.linked_employees && rec.linked_employees.length > 0) {
+        return rec.linked_employees.some(
+          emp => emp.toLowerCase() === entity.toLowerCase()
+        )
+      }
+      
+      // For recommendations without linked employees (project-level), 
+      // match by risk type only (first match wins)
+      return true
+    }) ?? -1
+    
     if (recIndex >= 0) {
       const targetId = `recommendation-${recIndex}`
       scrollToAndHighlight(targetId, () => setExpandRecommendations(prev => prev + 1))
