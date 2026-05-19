@@ -173,12 +173,17 @@ function formatRiskType(type: string): string {
     .join(' ')
 }
 
+// Generate a unique identifier for a risk to match with its recommendation
+export function generateRiskId(type: string, entity: string, project?: string): string {
+  return `${type}|${entity}|${project || ''}`.toLowerCase()
+}
+
 interface RiskCardProps {
   risk: RiskItem
   defaultExpanded?: boolean
   resetKey?: number
   onViewScorecard?: (employeeName: string) => void
-  onViewRecommendation?: (riskType: string) => void
+  onViewRecommendation?: (riskId: string) => void
 }
 
 export function RiskCard({ risk, defaultExpanded = false, resetKey, onViewScorecard, onViewRecommendation }: RiskCardProps) {
@@ -302,7 +307,7 @@ export function RiskCard({ risk, defaultExpanded = false, resetKey, onViewScorec
               {onViewRecommendation && risk.recommendation && (
                 <button
                   type="button"
-                  onClick={() => onViewRecommendation(risk.type)}
+                  onClick={() => onViewRecommendation(generateRiskId(risk.type, risk.entity, risk.project))}
                   className="text-[11px] font-semibold px-3 py-1 rounded-full flex items-center gap-1.5 transition-all duration-150"
                   style={{
                     background: 'var(--accent)',
