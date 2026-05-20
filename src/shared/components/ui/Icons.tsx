@@ -68,6 +68,10 @@ export const AwardIcon        = (p: IconProps) => base('<circle cx="12" cy="8" r
 export const BriefcaseIcon    = (p: IconProps) => base('<rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>', p)
 export const BrainIcon        = (p: IconProps) => base('<path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/>', p)
 export const CircuitIcon      = (p: IconProps) => base('<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M9 9h6v6H9z"/><path d="M15 2v2"/><path d="M15 20v2"/><path d="M2 15h2"/><path d="M2 9h2"/><path d="M20 15h2"/><path d="M20 9h2"/><path d="M9 2v2"/><path d="M9 20v2"/>', p)
+export const SearchIcon       = (p: IconProps) => base('<circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>', p)
+export const FilterIcon       = (p: IconProps) => base('<line x1="4" y1="6" x2="20" y2="6"/><line x1="6" y1="12" x2="18" y2="12"/><line x1="8" y1="18" x2="16" y2="18"/>', p)
+export const ChevronsExpandIcon = (p: IconProps) => base('<polyline points="7 8 12 3 17 8"/><polyline points="7 16 12 21 17 16"/>', p)
+export const ChevronsCollapseIcon = (p: IconProps) => base('<polyline points="7 4 12 9 17 4"/><polyline points="7 20 12 15 17 20"/>', p)
 
 // ── File-type specific icons ───────────────────────────────────────────────
 export function FileTypeIcon({ ext, size = 14 }: { ext: string; size?: number }) {
