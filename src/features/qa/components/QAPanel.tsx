@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { ArrowRightIcon, AlertTriangleIcon, CircuitIcon } from '@/shared/components/ui/Icons'
+import { ArrowRightIcon, AlertTriangleIcon, CircuitIcon, XIcon } from '@/shared/components/ui/Icons'
 import { Skeleton } from '@/shared/components/ui/Loader'
 import { useAsk, getLocalAnswer } from '../hooks/useAsk'
 import { QAResponseRenderer } from './QAResponseRenderer'
@@ -111,20 +111,34 @@ export function QAPanel({ localData }: { localData?: AnalysisResult | null }) {
 
       {/* Input row - stacked on mobile, inline on desktop */}
       <div className="flex flex-col sm:flex-row gap-2 mb-4">
-        <input
-          ref={inputRef}
-          type="text"
-          value={query}
-          onChange={e => setQuery(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleAsk()}
-          placeholder="e.g. Which project has the highest margin?"
-          className={[
-            'flex-1 px-3 py-2 sm:px-4 sm:py-2.5 text-[13px] sm:text-[14px] font-sans bg-surface-base',
-            'border-2 border-[var(--border-default)] rounded-[10px] text-ink-primary',
-            'placeholder:text-ink-tertiary outline-none',
-            'transition-all focus:border-accent focus:ring-2 focus:ring-[var(--accent-light)]',
-          ].join(' ')}
-        />
+        <div className="relative flex-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={e => setQuery(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleAsk()}
+            placeholder="e.g. Which project has the highest margin?"
+            disabled={isPending}
+            className={[
+              'w-full px-3 py-2 sm:px-4 sm:py-2.5 pr-9 text-[13px] sm:text-[14px] font-sans bg-surface-base',
+              'border-2 border-[var(--border-default)] rounded-[10px] text-ink-primary',
+              'placeholder:text-ink-tertiary outline-none',
+              'transition-all focus:border-accent focus:ring-2 focus:ring-[var(--accent-light)]',
+              isPending ? 'opacity-50 cursor-not-allowed' : '',
+            ].join(' ')}
+          />
+          {query && !isPending && (
+            <button
+              type="button"
+              onClick={() => { setQuery(''); inputRef.current?.focus() }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full text-ink-tertiary hover:text-ink-primary bg-surface-base hover:bg-surface-raised transition-colors"
+              aria-label="Clear input"
+            >
+              <XIcon size={14} strokeWidth={2} />
+            </button>
+          )}
+        </div>
         <button
           onClick={() => handleAsk()}
           disabled={isPending || !query.trim()}

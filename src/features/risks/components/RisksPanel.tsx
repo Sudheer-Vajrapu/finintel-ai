@@ -356,15 +356,12 @@ export function RisksPanel({
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <RiskOverviewHeader overview={data.overview} />
         {onProjectChange && (
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] font-medium text-ink-tertiary">Filter by project:</span>
-            <ProjectFilterDropdown
-              projects={projects}
-              selectedProject={selectedProject}
-              onProjectChange={onProjectChange}
-              isLoading={projectsLoading}
-            />
-          </div>
+          <ProjectFilterDropdown
+            projects={projects}
+            selectedProject={selectedProject}
+            onProjectChange={onProjectChange}
+            isLoading={projectsLoading}
+          />
         )}
       </div>
 

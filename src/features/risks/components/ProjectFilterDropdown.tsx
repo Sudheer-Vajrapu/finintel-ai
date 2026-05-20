@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { ChevronDownIcon, XIcon } from '@/shared/components/ui/Icons'
+import { ChevronDownIcon, XIcon, FilterIcon } from '@/shared/components/ui/Icons'
 import type { Project } from '@/shared/api/types'
 
 interface ProjectFilterDropdownProps {
@@ -61,7 +61,9 @@ export function ProjectFilterDropdown({
             : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
           isLoading ? 'opacity-60 cursor-not-allowed' : '',
         ].join(' ')}
+        aria-label="Filter by project"
       >
+        <FilterIcon size={14} strokeWidth={2} className="flex-shrink-0" />
         <span className="truncate max-w-[140px]">
           {selectedProject || 'All Projects'}
         </span>

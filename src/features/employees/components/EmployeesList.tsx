@@ -2,7 +2,8 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Badge } from '@/shared/components/ui/Badge'
 import { CardSkeleton } from '@/shared/components/ui/Loader'
 import { EmptyState, ErrorState } from '@/shared/components/ui/EmptyState'
-import { ChevronDownIcon, XIcon, TrendingUpIcon, TrendingDownIcon, MinusIcon } from '@/shared/components/ui/Icons'
+import { ChevronDownIcon, XIcon, TrendingUpIcon, TrendingDownIcon, MinusIcon, SearchIcon, FilterIcon, ChevronsExpandIcon, ChevronsCollapseIcon } from '@/shared/components/ui/Icons'
+import { Tooltip } from '@/shared/components/ui/Tooltip'
 import { formatCurrency, formatPercent } from '@/shared/utils'
 import type { Employee, EmployeeTag, Project, TrendValue } from '@/shared/api/types'
 
@@ -262,23 +263,23 @@ function ProjectFilterDropdown({
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[12px] font-medium text-ink-tertiary">Filter by project:</span>
-      <div ref={dropdownRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className={[
-            'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
-            'border transition-all duration-150 cursor-pointer',
-            selectedProject
-              ? 'bg-accent/10 text-ink-primary border-accent/30 dark:bg-accent/20 dark:border-accent/40'
-              : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
-          ].join(' ')}
-        >
-          <span className="truncate max-w-[140px]">
-            {selectedProject || 'All Projects'}
-          </span>
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={[
+          'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
+          'border transition-all duration-150 cursor-pointer',
+          selectedProject
+            ? 'bg-accent/10 text-ink-primary border-accent/30 dark:bg-accent/20 dark:border-accent/40'
+            : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
+        ].join(' ')}
+        aria-label="Filter by project"
+      >
+        <FilterIcon size={14} strokeWidth={2} className="flex-shrink-0" />
+        <span className="truncate max-w-[140px]">
+          {selectedProject || 'All Projects'}
+        </span>
           {selectedProject ? (
             <button
               type="button"
@@ -365,7 +366,6 @@ function ProjectFilterDropdown({
             </div>
           </div>
         )}
-      </div>
     </div>
   )
 }
@@ -476,6 +476,7 @@ export function EmployeesList({
 }: EmployeesListProps) {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const toggleExpand = (id: string) => {
     setExpandedIds(prev => {
@@ -497,12 +498,30 @@ export function EmployeesList({
     underutilized: employees?.filter(e => e.tag === 'underutilized').length ?? 0,
   }), [employees])
 
-  // Filter employees based on selected status
+  // Filter employees based on selected status and search query
   const filteredEmployees = useMemo(() => {
     if (!employees) return []
-    if (statusFilter === 'all') return employees
-    return employees.filter(e => e.tag === statusFilter)
-  }, [employees, statusFilter])
+    
+    let result = employees
+    
+    // Apply status filter
+    if (statusFilter !== 'all') {
+      result = result.filter(e => e.tag === statusFilter)
+    }
+    
+    // Apply text search filter (UI-only, no API calls)
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim()
+      result = result.filter(e => {
+        const nameMatch = e.name.toLowerCase().includes(query)
+        const designationMatch = e.designation?.toLowerCase().includes(query) ?? false
+        const projectMatch = e.projects?.some(p => p.project_name.toLowerCase().includes(query)) ?? false
+        return nameMatch || designationMatch || projectMatch
+      })
+    }
+    
+    return result
+  }, [employees, statusFilter, searchQuery])
 
   // Check if all filtered employees are expanded
   const allExpanded = filteredEmployees.length > 0 && filteredEmployees.every(e => expandedIds.has(e.id))
@@ -567,8 +586,40 @@ export function EmployeesList({
           counts={statusCounts}
         />
         
-        {/* Right side: Project filter + Expand/Collapse All */}
+        {/* Right side: Search + Project filter + Expand/Collapse All */}
         <div className="flex items-center gap-3 flex-wrap">
+          {/* Employee search input (UI-only filtering) */}
+          <div className="relative">
+            <SearchIcon 
+              size={14} 
+              strokeWidth={2} 
+              className="absolute left-2.5 top-1/2 -translate-y-1/2 text-ink-tertiary pointer-events-none" 
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search employees..."
+              className={[
+                'pl-8 pr-8 py-1.5 w-[180px] text-[12px] rounded-full',
+                'bg-surface-base border border-[var(--border-default)]',
+                'text-ink-primary placeholder:text-ink-tertiary',
+                'focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent',
+                'transition-all duration-150',
+              ].join(' ')}
+              aria-label="Search employees by name, designation, or project"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 p-0.5 rounded-full hover:bg-surface-raised transition-colors text-ink-tertiary hover:text-ink-secondary"
+                aria-label="Clear search"
+              >
+                <XIcon size={12} strokeWidth={2.5} />
+              </button>
+            )}
+          </div>
           {onProjectChange && projects.length > 0 && !projectsLoading && (
             <ProjectFilterDropdown
               projects={projects}
@@ -577,18 +628,19 @@ export function EmployeesList({
             />
           )}
           {filteredEmployees.length > 0 && (
-            <button
-              onClick={toggleAll}
-              aria-label={allExpanded ? 'Collapse all employee cards' : 'Expand all employee cards'}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium font-sans cursor-pointer border transition-all duration-150 bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
-            >
-              <ChevronDownIcon 
-                size={12} 
-                strokeWidth={2.5} 
-                className={`transition-transform duration-300 ${allExpanded ? 'rotate-180' : ''}`} 
-              />
-              {allExpanded ? 'Collapse All' : 'Expand All'}
-            </button>
+            <Tooltip content={allExpanded ? 'Collapse All' : 'Expand All'}>
+              <button
+                onClick={toggleAll}
+                aria-label={allExpanded ? 'Collapse all employee cards' : 'Expand all employee cards'}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full cursor-pointer border transition-all duration-150 bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
+              >
+                {allExpanded ? (
+                  <ChevronsCollapseIcon size={16} strokeWidth={2} />
+                ) : (
+                  <ChevronsExpandIcon size={16} strokeWidth={2} />
+                )}
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>

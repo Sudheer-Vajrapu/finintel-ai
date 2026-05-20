@@ -2,7 +2,8 @@ import { useState, useMemo, useRef, useEffect } from 'react'
 import { Badge } from '@/shared/components/ui/Badge'
 import { CardSkeleton } from '@/shared/components/ui/Loader'
 import { EmptyState, ErrorState } from '@/shared/components/ui/EmptyState'
-import { TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronDownIcon, UsersIcon, XIcon } from '@/shared/components/ui/Icons'
+import { TrendingUpIcon, TrendingDownIcon, MinusIcon, ChevronDownIcon, UsersIcon, XIcon, FilterIcon, ChevronsExpandIcon, ChevronsCollapseIcon } from '@/shared/components/ui/Icons'
+import { Tooltip } from '@/shared/components/ui/Tooltip'
 import { formatCurrency, formatPercent } from '@/shared/utils'
 import type { Project, ProjectStatus, ProjectTrend, TrendValue } from '@/shared/api/types'
 
@@ -216,23 +217,23 @@ function ProjectFilterDropdown({
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[12px] font-medium text-ink-tertiary">Filter by project:</span>
-      <div ref={dropdownRef} className="relative">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className={[
-            'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
-            'border transition-all duration-150 cursor-pointer',
-            selectedProject
-              ? 'bg-accent/10 text-ink-primary border-accent/30 dark:bg-accent/20 dark:border-accent/40'
-              : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
-          ].join(' ')}
-        >
-          <span className="truncate max-w-[140px]">
-            {selectedProject || 'All Projects'}
-          </span>
+    <div ref={dropdownRef} className="relative">
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className={[
+          'flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
+          'border transition-all duration-150 cursor-pointer',
+          selectedProject
+            ? 'bg-accent/10 text-ink-primary border-accent/30 dark:bg-accent/20 dark:border-accent/40'
+            : 'bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary',
+        ].join(' ')}
+        aria-label="Filter by project"
+      >
+        <FilterIcon size={14} strokeWidth={2} className="flex-shrink-0" />
+        <span className="truncate max-w-[140px]">
+          {selectedProject || 'All Projects'}
+        </span>
           {selectedProject ? (
             <button
               type="button"
@@ -319,7 +320,6 @@ function ProjectFilterDropdown({
             </div>
           </div>
         )}
-      </div>
     </div>
   )
 }
@@ -507,18 +507,19 @@ export function ProjectsList({
             />
           )}
           {filteredProjects && filteredProjects.length > 0 && (
-            <button
-              onClick={toggleAll}
-              aria-label={allExpanded ? 'Collapse all project cards' : 'Expand all project cards'}
-              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-medium font-sans cursor-pointer border transition-all duration-150 bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
-            >
-              <ChevronDownIcon 
-                size={12} 
-                strokeWidth={2.5} 
-                className={`transition-transform duration-300 ${allExpanded ? 'rotate-180' : ''}`} 
-              />
-              {allExpanded ? 'Collapse All' : 'Expand All'}
-            </button>
+            <Tooltip content={allExpanded ? 'Collapse All' : 'Expand All'}>
+              <button
+                onClick={toggleAll}
+                aria-label={allExpanded ? 'Collapse all project cards' : 'Expand all project cards'}
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full cursor-pointer border transition-all duration-150 bg-surface-base text-ink-secondary border-[var(--border-default)] hover:bg-surface-raised hover:text-ink-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-surface-base"
+              >
+                {allExpanded ? (
+                  <ChevronsCollapseIcon size={16} strokeWidth={2} />
+                ) : (
+                  <ChevronsExpandIcon size={16} strokeWidth={2} />
+                )}
+              </button>
+            </Tooltip>
           )}
         </div>
       </div>
